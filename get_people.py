@@ -5,6 +5,7 @@ import time
 import json
 from selenium import webdriver
 from datetime import datetime
+from datetime import date
 from pymongo import MongoClient
 
 # REPLACE With your LinkedIn Credentials
@@ -39,9 +40,14 @@ def clean_item(item):
 
 # https://www.linkedin.com/search/results/people/?facetGeoRegion=%5B%22us%3A0%22%5D&keywords=Data%20Engineer&origin=FACETED_SEARCH
 def generate_scrape_url(scrape_url):
-    title = input("Enter job title: ")
-    uname = input("Username: ")
-    passwd = input("Password: ")
+
+    #Reads in the config file so input is automatic.
+    with open("cfg.txt") as newFile:
+        configArray = newFile.readlines()
+
+    title = configArray[0]
+    uname = configArray[2]
+    passwd = configArray[3]
 
 # collecting people in US only
     scrape_url += "/search/results/people/?facetGeoRegion=%5B%22us%3A0%22%5D&keywords="
@@ -120,6 +126,7 @@ if __name__ == '__main__':
             time.sleep(2)
 
             scroll_down_page(browser, 20)
+            dateCaptured = str(date.now())
 
             obj['ProfileID'] = link.split('/')[len(link.split('/'))-2]
             if obj['ProfileID'] != "people":
@@ -153,6 +160,8 @@ if __name__ == '__main__':
                     obj['Profile Summary'] = clean_item(browser.find_element_by_class_name("pv-about__summary-text").text)
                 except:
                     obj['Profile Summary'] = ''
+                
+                obj['Date Captured'] = dateCaptured
 
                 try:
                     companies = browser.find_element_by_id("experience-section").find_elements_by_class_name("pv-profile-section__card-item-v2")
@@ -297,6 +306,12 @@ if __name__ == '__main__':
                         category_name = "Skills"
 
                     obj[category_name] = general_skills
+
+                try:
+                    dateCaptured = clean_item(datetime.date.today())
+                    obj['Date Captured'] = dateCaptured
+                except:
+                    obj['Date Captured'] = ''
 
                 people_data.append(obj)
             
