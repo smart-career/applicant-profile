@@ -73,7 +73,7 @@ def scroll_down_page(browser, speed=8):
 
 if __name__ == '__main__':
     start_time = time.time()
-    # widowns \, Linux and Max /
+    # windows \, Linux and Max /
     driver = os.getcwd() + "\geckodriver.exe"
     base_url = "https://www.linkedin.com"
     sign_in_url = "https://www.linkedin.com/uas/login?fromSignIn=true"
@@ -110,7 +110,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
 
-    while True:
+    while True and page != 5:
         print('STATUS: Scraping Page ' + str(page))
         links = []
         for link in people:
@@ -126,11 +126,11 @@ if __name__ == '__main__':
             time.sleep(2)
 
             scroll_down_page(browser, 20)
-            dateCaptured = str(date.now())
-
+  
             obj['ProfileID'] = link.split('/')[len(link.split('/'))-2]
             if obj['ProfileID'] != "people":
                 print("STATUS: Scraping Profile_ID: {}".format(obj['ProfileID']))
+
                 try:
                     browser.find_element_by_xpath("//a[@class='lt-line-clamp__more']").click()
                 except:
@@ -161,8 +161,6 @@ if __name__ == '__main__':
                 except:
                     obj['Profile Summary'] = ''
                 
-                obj['Date Captured'] = dateCaptured
-
                 try:
                     companies = browser.find_element_by_id("experience-section").find_elements_by_class_name("pv-profile-section__card-item-v2")
                 except:
@@ -336,3 +334,5 @@ if __name__ == '__main__':
 
 
     print("--- %s seconds ---" % (time.time() - start_time))
+    print("Daily automation has been completed.")
+    sys.exit(0)
