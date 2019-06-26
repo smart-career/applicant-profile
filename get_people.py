@@ -39,15 +39,11 @@ def clean_item(item):
     return item
 
 # https://www.linkedin.com/search/results/people/?facetGeoRegion=%5B%22us%3A0%22%5D&keywords=Data%20Engineer&origin=FACETED_SEARCH
-def generate_scrape_url(scrape_url):
+def generate_scrape_url(scrape_url, joblist, configArray):
 
-    #Reads in the config file so input is automatic.
-    with open("cfg.txt") as newFile:
-        configArray = newFile.readlines()
-
-    title = configArray[0]
-    uname = configArray[2]
-    passwd = configArray[3]
+    title = joblist
+    uname = configArray[1]
+    passwd = configArray[2]
 
 # collecting people in US only
     scrape_url += "/search/results/people/?facetGeoRegion=%5B%22us%3A0%22%5D&keywords="
@@ -57,9 +53,8 @@ def generate_scrape_url(scrape_url):
 
     valid_title_name = title.strip().replace(' ', '_')
     valid_title_name = re.sub(r'(?u)[^-\w.]', '', valid_title_name)
-    output_filename = valid_title_name + '_people_' + datetime.today().strftime("%Y%m%d") + '.json'
 
-    return scrape_url, output_filename, uname, passwd
+    return scrape_url, uname, passwd
 
 
 def scroll_down_page(browser, speed=8):
@@ -69,17 +64,16 @@ def scroll_down_page(browser, speed=8):
         browser.execute_script("window.scrollTo(0, {});".format(current_scroll_position))
         new_height = browser.execute_script("return document.body.scrollHeight")
 
-# driver download: https://github.com/mozilla/geckodriver/releases
-
-if __name__ == '__main__':
+def pscrape(jobList, configArray):
     start_time = time.time()
+    # driver download: https://github.com/mozilla/geckodriver/releases
     # windows \, Linux and Max /
     driver = os.getcwd() + "\geckodriver.exe"
     base_url = "https://www.linkedin.com"
     sign_in_url = "https://www.linkedin.com/uas/login?fromSignIn=true"
     people_data = []
     page = 1
-    people_search_url, filename, USERNAME, PASSWORD  = generate_scrape_url(base_url)
+    people_search_url, USERNAME, PASSWORD  = generate_scrape_url(base_url, jobList, configArray)
 
     print('\nSTATUS: Opening website')
     browser = webdriver.Firefox(executable_path=driver)
@@ -332,7 +326,28 @@ if __name__ == '__main__':
 
     browser.quit()
 
+if __name__ == '__main__':
+    # Reads in the config file so input is automatic.
+    with open("cfg.txt") as newFile:
+        configArray = newFile.readlines()
 
-    print("--- %s seconds ---" % (time.time() - start_time))
-    print("Daily automation has been completed.")
+    jobList = []
+    tempStr = ""
+
+    while len(configArray) > 0:
+        try:
+            int(configArray[0])
+            break
+        except:
+            jobList.append(configArray[0])
+            del configArray[0]
+
+    # Searches multiple jobs in a row.
+    for x in range(len(jobList)):
+        print("Now scraping:", jobList[0])
+        pscrape(jobList[0], configArray)
+        time.sleep(5)
+        del jobList[0]
+
+    print("Daily automation has been completed for: get_people.py")
     sys.exit(0)
