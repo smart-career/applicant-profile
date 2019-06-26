@@ -1,4 +1,12 @@
-# Smart-Career Applicant Profile v1.2
+# Smart-Career Applicant Profile v1.3
+
+## Changelog v1.3
+### Additions:
+### Changes:
++ Now automatically looks up people for multiple job titles.
++ pscheduler now runs at 2pm.
++ Added extra job titles to cfg.txt
+### Removals:
 
 ## Changelog v1.2
 ### Additions:
