@@ -1,4 +1,11 @@
-# Smart-Career Applicant Profile v1.3
+# Smart-Career Applicant Profile v1.4
+
+## Changelog v1.4
+### Additions:
++ Can now see when and how many documents have been added to MongoDB via the "docnum.txt".
+### Changes:
++ Changed 5 pages each to 6, to test load. Will increase by one each day.
+### Removals:
 
 ## Changelog v1.3
 ### Additions:
