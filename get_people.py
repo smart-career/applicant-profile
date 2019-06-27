@@ -150,12 +150,12 @@ def pscrape(jobList, configArray):
                     ()
 
                 try:
-                    obj['Job Title'] = clean_item(browser.find_element_by_xpath("//h2[@class='mt1 inline-block t-18 t-black t-normal']").text)
+                    obj['Job Title'] = clean_item(browser.find_element_by_xpath("//h2[@class='mt1 t-18 t-black t-normal']").text)
                 except:
                     obj['Job Title'] = ''
 
                 try:
-                    obj['Company'] = clean_item(browser.find_element_by_xpath("//span[@class='text-align-left ml2 t-14 t-black t-bold full-width lt-line-clamp lt-line-clamp--single-line ember-view']").text)
+                    obj['Company'] = clean_item(browser.find_element_by_xpath("//span[@class= 'lt-line-clamp__line lt-line-clamp__line--last']").text)
                 except:
                     obj['Company'] = ''
 
