@@ -5,6 +5,8 @@
 + Can now see when and how many documents have been added to MongoDB via the "docnum.txt".
 ### Changes:
 + Changed 5 pages each to 6, to test load. Will increase by one each day.
++ Changed xpath of job_title and company so data will be properly stored.
+  (Testing tomorrow since we have hit search limit!)
 ### Removals:
 
 ## Changelog v1.3
