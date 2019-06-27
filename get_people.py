@@ -8,6 +8,9 @@ from datetime import datetime
 from datetime import date
 from pymongo import MongoClient
 
+# Global Variable
+docNum = 0
+
 # REPLACE With your LinkedIn Credentials
 USERNAME = ""
 PASSWORD = ""
@@ -26,8 +29,10 @@ def mongodb_put_doc(doc):
     col=mongodb_get_collection(db,'applicantprofile')
 
     try:
+        global docNum
         re=col.insert_one(doc)
         ret=re.inserted_id
+        docNum += 1
     except:
         ret=doc['ProfileID']
           
@@ -99,12 +104,21 @@ def pscrape(jobList, configArray):
 
     if len(people) == 0:
         print('STATUS: No people found. Press any key to exit scraper')
+        print("Check docnum.txt for # of documents submitted!")
+        today = datetime.now()
+        f = open("docnum.txt","w+")
+        f.write("Ran:\n")
+        f.write(str(today))
+        f.write("\nNumber of documents submitted:\n")
+        f.write(str(docNum))
+        f.write("\n")
+        f.close()
         browser.quit()
         exit = input('')
         sys.exit(0)
 
 
-    while True and page != 5:
+    while True and page != 6:
         print('STATUS: Scraping Page ' + str(page))
         links = []
         for link in people:
@@ -350,4 +364,14 @@ if __name__ == '__main__':
         del jobList[0]
 
     print("Daily automation has been completed for: get_people.py")
+    print("Check docnum.txt for # of documents submitted!")
+    today = datetime.now()
+    f = open("docnum.txt","w+")
+    f.write("Ran:\n")
+    f.write(str(today))
+    f.write("\nNumber of documents submitted:\n")
+    f.write(str(docNum))
+    f.write("\n")
+    f.close()
+
     sys.exit(0)
