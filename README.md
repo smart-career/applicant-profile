@@ -1,6 +1,6 @@
 # Smart-Career Applicant Profile v1.5
 
-## Changelog v1.4
+## Changelog v1.5
 ### Additions:
 + Date captured has been added and will apply to all future documents.
 ### Changes:
