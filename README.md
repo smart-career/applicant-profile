@@ -1,4 +1,15 @@
-# Smart-Career Applicant Profile v1.4
+# Smart-Career Applicant Profile v1.5
+
+## Changelog v1.4
+### Additions:
++ Date captured has been added and will apply to all future documents.
+### Changes:
++ Fixed a bug where job titles and companies were not being parsed correctly. 
+They will now show up in all future documents as well.
++ Changed formatting of the output log.
++ Swapped the scheduler times between pscheduler and scheduler. This is because scheduler
+has no limit and therefore will take longer.
+### Removals:
 
 ## Changelog v1.4
 ### Additions:
