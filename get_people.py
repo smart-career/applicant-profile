@@ -109,15 +109,15 @@ def pscrape(jobList, configArray):
         f = open("docnum.txt","w+")
         f.write("Ran:\n")
         f.write(str(today))
+        f.write("\n")
         f.write("\nNumber of documents submitted:\n")
         f.write(str(docNum))
-        f.write("\n")
         f.close()
         browser.quit()
         exit = input('')
         sys.exit(0)
 
-
+    #Scraping up to 6 pages per search.
     while True and page != 6:
         print('STATUS: Scraping Page ' + str(page))
         links = []
@@ -314,8 +314,8 @@ def pscrape(jobList, configArray):
                     obj[category_name] = general_skills
 
                 try:
-                    dateCaptured = clean_item(datetime.date.today())
-                    obj['Date Captured'] = dateCaptured
+                    dateCaptured = date.today()
+                    obj['Date Captured'] = str(dateCaptured)
                 except:
                     obj['Date Captured'] = ''
 
@@ -323,8 +323,7 @@ def pscrape(jobList, configArray):
             
                 doc_id=mongodb_put_doc(obj)
                 print('post id: ', doc_id)
-#                with open(filename, 'w', encoding='utf-8') as outfile:
-#                     json.dump(people_data, outfile, indent=2, ensure_ascii=False)
+
             else:
                 print("STATUS: Skipping Profile_ID: {}".format(obj['ProfileID']))
 
@@ -369,9 +368,9 @@ if __name__ == '__main__':
     f = open("docnum.txt","w+")
     f.write("Ran:\n")
     f.write(str(today))
+    f.write("\n")
     f.write("\nNumber of documents submitted:\n")
     f.write(str(docNum))
-    f.write("\n")
     f.close()
 
     sys.exit(0)
