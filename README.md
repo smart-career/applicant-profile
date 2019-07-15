@@ -1,4 +1,13 @@
-# Smart-Career Applicant Profile v1.5
+# Smart-Career Applicant Profile v1.6
+
+## Changelog v1.6
+### Additions/Changes:
++ Jae is currently working on a new data extractor.
++ app.json which is a full export of the collection on MongoDB
+### Removals:
+### To Do:
++ Indeed profile scraping
++ LinkedIn data parsing
 
 ## Changelog v1.5
 ### Additions:
