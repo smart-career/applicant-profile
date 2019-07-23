@@ -25,7 +25,7 @@ def mongodb_get_collection(db, item):
 
 def mongodb_put_doc(doc):
     db = mongodb_init()
-    col = mongodb_get_collection(db, 'applicantprofilecopy')
+    col = mongodb_get_collection(db, 'applicantprofile')
 
     try:
         global docNum
@@ -54,9 +54,9 @@ def mongodb_read_docs(col):
 
 # Neo4j Functions
 def neo4j_init():
-    uri = "bolt://localhost:7687"
+    uri = "bolt://localhost"
     userName = "neo4j"
-    passwd = "career"
+    passwd = "Random1234"
     ndb = GraphDatabase.driver(uri, auth=(userName, passwd))
     return ndb
 
@@ -100,11 +100,29 @@ def write_log(msg):
     ret = logf.write(msg)
     return ret
 
+def expAdd():
+    print("hello")
+
+def eduAdd():
+    print("hello")
+
+def skillsAdd():
+    print("hello")
+
+def industryAdd():
+    print("hello")
+
+def toolAdd():
+    print("hello")
+
+def othersAdd():
+    print("hello")
+
 
 if "__main__":
 
     print("Starting")
-    docs = mongodb_read_docs('applicantprofilecopy')
+    docs = mongodb_read_docs('applicantprofile')
     graphDB = neo4j_init()
 
     for d in docs:
@@ -113,9 +131,10 @@ if "__main__":
         location = d['Location']
         experience = d.get('Experience')
         education = d.get('Education')
-        skill = d.get('Skills & Endorsements')
+        skill = d.get('Skills \u0026 Endorsements')
         industryKnowledge = d.get('Industry Knowledge')
-        tool_tech = d.get('Tools & Technology')
+        tool_tech = d.get('Tools \u0026 Technologies')
+        interpersonal = d.get('Interpersonal Skills')
         otherSkills = d.get('Other Skills')
 
         cqlNode = """Merge (j:`Job Title` {Name:'%s'})
@@ -125,16 +144,19 @@ if "__main__":
                  Merge (ed:`Education` {Name:'%s'})
                  Merge (s:`Skills & Endorsements` {Name:'%s'})
                  Merge (i:`Industry Knowledge` {Name:'%s'})
-                 Merge (t:`Tools & Technology` {Names: '%s'}            
+                 Merge (t:`Tools & Technology` {Name: '%s'})
+                 Merge (in:`Interpersonal Skils` {Name: '%s'})   
+                 Merge (o:`Other Skills` {Name: '%s'})        
                  Merge (j)-[:WORK AT]->(c)
                  Merge (j)-[:LOCATED AT]->(l)
                  Merge (j)-[:EXPERIENCED AT]->(e)
                  Merge (j)-[:EDUCATED AT]->(ed)
                  Merge (j)-[:HAS]->(s)
                  Merge (j)-[:HAS]->(i)
-                 Merge (j)-[:HAS]->(t)""" % (jobTitle, company, location, experience,
+                 Merge (j)-[:HAS]->(t)
+                 Merge (j)-[:HAS]->(in)""" % (jobTitle, company, location, experience,
                                              education, skill, industryKnowledge,
-                                             tool_tech, otherSkills)
+                                             tool_tech, interpersonal, otherSkills)
 
         try:
             ret = neo4j_merge(graphDB, cqlNode)
