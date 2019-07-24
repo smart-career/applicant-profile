@@ -1,4 +1,14 @@
-# Smart-Career Applicant Profile v1.6
+# Smart-Career Applicant Profile v1.7
+
+## Changelog v1.7
+### Additions/Changes:
++ 
+### Removals:
++ The data extractor since... Mr. Song came up with the MongoDB to Neo4j program
+### To Do:
++ Parsing through nested dictionaries.
++ Attaching a list of skills and other nodes to one entity
++ Formatting that follows our schematic
 
 ## Changelog v1.6
 ### Additions/Changes:
