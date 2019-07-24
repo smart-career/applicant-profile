@@ -14,7 +14,7 @@ from neo4j import GraphDatabase
 # Mongo DB fuctions
 def mongodb_init():
     client = MongoClient('mongodb://34.73.180.107:27017')
-    db = client.smartcareer
+    db = client.Backup
     return db
 
 
@@ -100,25 +100,6 @@ def write_log(msg):
     ret = logf.write(msg)
     return ret
 
-def expAdd():
-    print("hello")
-
-def eduAdd():
-    print("hello")
-
-def skillsAdd():
-    print("hello")
-
-def industryAdd():
-    print("hello")
-
-def toolAdd():
-    print("hello")
-
-def othersAdd():
-    print("hello")
-
-
 if "__main__":
 
     print("Starting")
@@ -126,9 +107,9 @@ if "__main__":
     graphDB = neo4j_init()
 
     for d in docs:
-        jobTitle = d['Job Title']
-        company = d['Company']
-        location = d['Location']
+        jobTitle = d.get('Job Title')
+        company = d.get('Company')
+        location = d.get('Location')
         experience = d.get('Experience')
         education = d.get('Education')
         skill = d.get('Skills \u0026 Endorsements')
@@ -137,34 +118,99 @@ if "__main__":
         interpersonal = d.get('Interpersonal Skills')
         otherSkills = d.get('Other Skills')
 
-        cqlNode = """Merge (j:`Job Title` {Name:'%s'})
-                 Merge (c:`Company` {Name:'%s'})
+        cqlNode = """Merge (c:`Job Title` {Name:'%s', Company:'%s'})
                  Merge (l:`Location` {Name:'%s'})
-                 Merge (e:`Experience` {Name:'%s'})
-                 Merge (ed:`Education` {Name:'%s'})
-                 Merge (s:`Skills & Endorsements` {Name:'%s'})
-                 Merge (i:`Industry Knowledge` {Name:'%s'})
-                 Merge (t:`Tools & Technology` {Name: '%s'})
-                 Merge (in:`Interpersonal Skils` {Name: '%s'})   
-                 Merge (o:`Other Skills` {Name: '%s'})        
-                 Merge (j)-[:WORK AT]->(c)
-                 Merge (j)-[:LOCATED AT]->(l)
-                 Merge (j)-[:EXPERIENCED AT]->(e)
-                 Merge (j)-[:EDUCATED AT]->(ed)
-                 Merge (j)-[:HAS]->(s)
-                 Merge (j)-[:HAS]->(i)
-                 Merge (j)-[:HAS]->(t)
-                 Merge (j)-[:HAS]->(in)""" % (jobTitle, company, location, experience,
-                                             education, skill, industryKnowledge,
-                                             tool_tech, interpersonal, otherSkills)
+                 Merge (c)-[:LOCATEDAT]->(l)""" % (jobTitle, company, location)
 
         try:
             ret = neo4j_merge(graphDB, cqlNode)
+
         except Exception as e:
             write_log(str(e))
             continue
 
         print("Neo4j inserted: %s" % ret)
+
+        try:
+            for item in experience:
+                title = item['Job Title']
+                comp = item['Company'].replace("'","")
+                loc = item['Location']
+                years = item['Years']
+                formerJob = """Merge (f:`Former Job` {Name:'%s', Company:'%s', Location:'%s', Years:'%s'})
+                               Merge (c)-[:PREVIOUSLYWORKEDAT]->(f)""" % (title, comp, loc, years)
+                ret = neo4j_merge(graphDB, formerJob)
+                print("Neo4j inserted: %s" % ret)
+
+        except Exception as e:
+            write_log(str(e))
+            continue
+        
+        try:
+            for item in education:
+                school = item['School']
+                degree = item['Degree'].replace("'","")
+                dateWent = item['Date Attended']
+                eduExp = """Merge (ed:`Education` {School:'%s', Degree:'%s', Attended:'%s'})
+                            Merge (c)-[:KNOWLEDGEGAINEDFROM]->(f)""" % (school, degree, dateWent)
+                ret = neo4j_merge(graphDB, eduExp)
+                print("Neo4j inserted: %s" % ret)
+
+        except Exception as e:
+            write_log(str(e))
+            continue
+
+        try:
+            pLabel = """Merge (p:'Personal Skills' {Name:'Personal Skills'})
+                        Merge (p)-[:PERSONAL SKILLS FOR]->(c)"""
+            for item in otherSkills:
+                oSkill = item['Skills']
+                pSkills = """Merge (o:`Other Skills` {Skill:'%s'})
+                            Merge (o)-[:PARTOF]->(p)""" % (oSkill)
+                ret = neo4j_merge(graphDB, pSkills)
+                print("Neo4j inserted: %s" % ret)
+            
+            for item in interpersonal:
+                iSkill = item['Skills']
+                pSkills = """Merge (i:`Interpersonal Skills` {Skill:'%s'})
+                            Merge (i)-[:PARTOF]->(p)""" % (iSkill)
+                ret = neo4j_merge(graphDB, pSkills)
+                print("Neo4j inserted: %s" % ret)
+    
+        except Exception as e:
+            write_log(str(e))
+            continue
+
+        try:
+            bLabel = """Merge (b:'Business Skills' {Name: 'Business Skills'})
+                        Merge (b)-[:BUSINESS SKILLS FOR]->(c)"""
+            for item in skill:
+                skills = item['Skills']
+                bSkills = """Merge (s:`Skills` {Skill:'%s'})
+                            Merge (s)-[:PARTOF]->(b)""" % (skills)
+                ret = neo4j_merge(graphDB, bSkills)
+                print("Neo4j inserted: %s" % ret)
+            
+            for item in tool_tech:
+                tSkill = item['Skills']
+                bSkills = """Merge (t:`Tools and Technology` {Skill:'%s'})
+                             Merge (t)-[:PARTOF]->(b)""" % (tSkill)
+                ret = neo4j_merge(graphDB, bSkills)
+                print("Neo4j inserted: %s" % ret)
+            
+            for item in industryKnowledge:
+                if industryKnowledge is "":
+                    iSkill = "Not specified"
+                else:
+                    iSkill = item['Skills']
+                bSkills = """Merge (t:`Industry Knowledge` {Skill:'%s'})
+                             Merge (i)-[:PARTOF]->(b)""" % (iSkill)
+                ret = neo4j_merge(graphDB, bSkills)
+                print("Neo4j inserted: %s" % ret)
+
+        except Exception as e:
+            write_log(str(e))
+            continue
 
     graphDB.close()
     print("completed")
