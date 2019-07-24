@@ -1,8 +1,18 @@
-# Smart-Career Applicant Profile v1.7
+# Smart-Career Applicant Profile v1.8
+
+## Changelog v1.8
+### Additions/Changes:
++ Upload to neo4j successful.
++ Extraction of nested dictionaries successful
++ Using my local database for now.
+### Removals:
+### To Do:
++ Get newer data that includes job titles?
++ Fix any formatting issues for our graphs
 
 ## Changelog v1.7
 ### Additions/Changes:
-+ 
++ Framework for tomorrow.
 ### Removals:
 + The data extractor since... Mr. Song came up with the MongoDB to Neo4j program
 ### To Do:
