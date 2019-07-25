@@ -5,7 +5,11 @@ import time
 import json
 from selenium import webdriver
 from datetime import datetime
+from datetime import date
 from pymongo import MongoClient
+
+# Global Variable
+docNum = 0
 
 # REPLACE With your LinkedIn Credentials
 USERNAME = ""
@@ -25,8 +29,10 @@ def mongodb_put_doc(doc):
     col=mongodb_get_collection(db,'applicantprofile')
 
     try:
+        global docNum
         re=col.insert_one(doc)
         ret=re.inserted_id
+        docNum += 1
     except:
         ret=doc['ProfileID']
           
@@ -38,10 +44,10 @@ def clean_item(item):
     return item
 
 # https://www.linkedin.com/search/results/people/?facetGeoRegion=%5B%22us%3A0%22%5D&keywords=Data%20Engineer&origin=FACETED_SEARCH
-def generate_scrape_url(scrape_url):
-    title = input("Enter job title: ")
-    uname = input("Username: ")
-    passwd = input("Password: ")
+def generate_scrape_url(scrape_url, config):
+
+    title = config['Job Title']
+
 
 # collecting people in US only
     scrape_url += "/search/results/people/?facetGeoRegion=%5B%22us%3A0%22%5D&keywords="
@@ -51,9 +57,8 @@ def generate_scrape_url(scrape_url):
 
     valid_title_name = title.strip().replace(' ', '_')
     valid_title_name = re.sub(r'(?u)[^-\w.]', '', valid_title_name)
-    output_filename = valid_title_name + '_people_' + datetime.today().strftime("%Y%m%d") + '.json'
 
-    return scrape_url, output_filename, uname, passwd
+    return scrape_url
 
 
 def scroll_down_page(browser, speed=8):
@@ -63,17 +68,20 @@ def scroll_down_page(browser, speed=8):
         browser.execute_script("window.scrollTo(0, {});".format(current_scroll_position))
         new_height = browser.execute_script("return document.body.scrollHeight")
 
-# driver download: https://github.com/mozilla/geckodriver/releases
-
-if __name__ == '__main__':
+def pscrape(config):
     start_time = time.time()
-    # widowns \, Linux and Max /
+    # driver download: https://github.com/mozilla/geckodriver/releases
+    # windows \, Linux and Max /
     driver = os.getcwd() + "\geckodriver.exe"
     base_url = "https://www.linkedin.com"
     sign_in_url = "https://www.linkedin.com/uas/login?fromSignIn=true"
     people_data = []
     page = 1
-    people_search_url, filename, USERNAME, PASSWORD  = generate_scrape_url(base_url)
+
+    USERNAME = config['User Name']
+    PASSWORD = config['Password']
+    col=config['Collection']
+    people_search_url = generate_scrape_url(base_url, config)
 
     print('\nSTATUS: Opening website')
     browser = webdriver.Firefox(executable_path=driver)
@@ -99,12 +107,21 @@ if __name__ == '__main__':
 
     if len(people) == 0:
         print('STATUS: No people found. Press any key to exit scraper')
+        print("Check docnum.txt for # of documents submitted!")
+        today = datetime.now()
+        f = open("docnum.txt","w+")
+        f.write("Ran:\n")
+        f.write(str(today))
+        f.write("\n")
+        f.write("\nNumber of documents submitted:\n")
+        f.write(str(docNum))
+        f.close()
         browser.quit()
         exit = input('')
         sys.exit(0)
 
-
-    while True:
+    #Scraping up to 6 pages per search.
+    while True and page != 6:
         print('STATUS: Scraping Page ' + str(page))
         links = []
         for link in people:
@@ -120,10 +137,11 @@ if __name__ == '__main__':
             time.sleep(2)
 
             scroll_down_page(browser, 20)
-
+  
             obj['ProfileID'] = link.split('/')[len(link.split('/'))-2]
             if obj['ProfileID'] != "people":
                 print("STATUS: Scraping Profile_ID: {}".format(obj['ProfileID']))
+
                 try:
                     browser.find_element_by_xpath("//a[@class='lt-line-clamp__more']").click()
                 except:
@@ -135,12 +153,12 @@ if __name__ == '__main__':
                     ()
 
                 try:
-                    obj['Job Title'] = clean_item(browser.find_element_by_xpath("//h2[@class='mt1 inline-block t-18 t-black t-normal']").text)
+                    obj['Job Title'] = clean_item(browser.find_element_by_xpath("//h2[@class='mt1 t-18 t-black t-normal']").text)
                 except:
                     obj['Job Title'] = ''
 
                 try:
-                    obj['Company'] = clean_item(browser.find_element_by_xpath("//span[@class='text-align-left ml2 t-14 t-black t-bold full-width lt-line-clamp lt-line-clamp--single-line ember-view']").text)
+                    obj['Company'] = clean_item(browser.find_element_by_xpath("//span[@class= 'lt-line-clamp__line lt-line-clamp__line--last']").text)
                 except:
                     obj['Company'] = ''
 
@@ -153,7 +171,7 @@ if __name__ == '__main__':
                     obj['Profile Summary'] = clean_item(browser.find_element_by_class_name("pv-about__summary-text").text)
                 except:
                     obj['Profile Summary'] = ''
-
+                
                 try:
                     companies = browser.find_element_by_id("experience-section").find_elements_by_class_name("pv-profile-section__card-item-v2")
                 except:
@@ -298,12 +316,16 @@ if __name__ == '__main__':
 
                     obj[category_name] = general_skills
 
+                try:
+                    dateCaptured = date.today()
+                    obj['Date Captured'] = str(dateCaptured)
+                except:
+                    obj['Date Captured'] = ''
+
                 people_data.append(obj)
             
                 doc_id=mongodb_put_doc(obj)
                 print('post id: ', doc_id)
-#                with open(filename, 'w', encoding='utf-8') as outfile:
-#                     json.dump(people_data, outfile, indent=2, ensure_ascii=False)
             else:
                 print("STATUS: Skipping Profile_ID: {}".format(obj['ProfileID']))
 
@@ -319,5 +341,41 @@ if __name__ == '__main__':
 
     browser.quit()
 
+if __name__ == '__main__':
+    # Reads in the config file so input is automatic.
+    with open("cfg.json") as json_cfg:
+        d = json.load(json_cfg)
+    
+    jobTitle = d['Job Title']
 
-    print("--- %s seconds ---" % (time.time() - start_time))
+    jobList = []
+    tempStr = ""
+
+    pscrape(d)
+    # while len(configArray) > 0:
+    #     try:
+    #         int(configArray[0])
+    #         break
+    #     except:
+    #         jobList.append(configArray[0])
+    #         del configArray[0]
+
+    # # Searches multiple jobs in a row.
+    # for x in range(len(jobList)):
+    #     print("Now scraping:", jobList[0])
+    #     pscrape(jobList[0], configArray)
+    #     time.sleep(5)
+    #     del jobList[0]
+
+    print("Daily automation has been completed for: get_people.py")
+    print("Check docnum.txt for # of documents submitted!")
+    today = datetime.now()
+    f = open("docnum.txt","w+")
+    f.write("Ran:\n")
+    f.write(str(today))
+    f.write("\n")
+    f.write("\nNumber of documents submitted:\n")
+    f.write(str(docNum))
+    f.close()
+
+    sys.exit(0)
