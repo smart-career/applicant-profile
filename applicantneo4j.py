@@ -140,8 +140,9 @@ if "__main__":
                 comp = item['Company'].replace("'","")
                 loc = item['Location']
                 years = item['Years']
-                formerJob = """Merge (f:`Former Job` {Name:'%s', Company:'%s', Location:'%s', Years:'%s'})
-                               Merge (f)<-[:PREVIOUSLYWORKEDAT]-(c)""" % (title, comp, loc, years)
+                formerJob = """MATCH (c:`Job Title`)
+                               Merge (f:`Former Job` {Name:'%s', Company:'%s', Location:'%s', Years:'%s'})
+                               Merge (c)-[:PREVIOUSLYWORKEDAT]->(f)""" % (title, comp, loc, years)
                 ret = neo4j_merge(graphDB, formerJob)
                 print("Neo4j inserted: %s" % ret)
 
@@ -154,7 +155,8 @@ if "__main__":
                 school = item['School']
                 degree = item['Degree'].replace("'","")
                 dateWent = item['Date Attended']
-                eduExp = """Merge (ed:`Education` {School:'%s', Degree:'%s', Attended:'%s'})
+                eduExp = """MATCH (c:`Job Title`)
+                            Merge (ed:`Education` {School:'%s', Degree:'%s', Attended:'%s'})
                             Merge (c)-[:KNOWLEDGEGAINEDFROM]->(ed)""" % (school, degree, dateWent)
                 ret = neo4j_merge(graphDB, eduExp)
                 print("Neo4j inserted: %s" % ret)
@@ -175,7 +177,9 @@ if "__main__":
                 bSkillList.append(item['Skills'])
             
             for skill in bSkillList:
-                bSkills = """Merge (b:`Business Skills` {Name: 'BusinessSkills'})
+                bSkills = """
+                            MATCH (c:`Job Title`)
+                            Merge (b:`Business Skills` {Name: 'BusinessSkills'})
                             Merge (b)-[:WORKRELATEDSKILLSFOR]->(c)
                             Merge (t:`Skills` {Skill:'%s'})
                             Merge (t)-[:PARTOF]->(b)""" % (skill)
@@ -195,7 +199,9 @@ if "__main__":
                 pSkillList.append(item['Skills'])  
 
             for skill in pSkillList:
-                pSkills = """Merge (p:`Personal Skills` {Name:'PersonalSkills'})
+                pSkills = """
+                            MATCH (c:`Job Title`)
+                            Merge (p:`Personal Skills` {Name:'PersonalSkills'})
                             Merge (p)-[:PERSONALSKILLSFOR]->(c)
                             Merge (o:`Skills` {Skill:'%s'})
                             Merge (o)-[:PARTOF]->(p)""" % (skill)
