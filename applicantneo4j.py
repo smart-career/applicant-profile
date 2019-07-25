@@ -44,7 +44,7 @@ def mongodb_read_docs(col):
 
     try:
 
-        ret = col.find().limit(50)
+        ret = col.find().limit(719)
 
     except Exception as e:
         print(e)
@@ -108,8 +108,11 @@ if "__main__":
 
     for d in docs:
         jobTitle = d.get('Job Title')
-        company = d.get('Company')
-        location = d.get('Location')
+        if jobTitle == "":
+            continue
+        jobTitle = d['Job Title']
+        company = d['Company']
+        location = d['Location']
         experience = d.get('Experience')
         education = d.get('Education')
         skill = d.get('Skills \u0026 Endorsements')
@@ -138,7 +141,7 @@ if "__main__":
                 loc = item['Location']
                 years = item['Years']
                 formerJob = """Merge (f:`Former Job` {Name:'%s', Company:'%s', Location:'%s', Years:'%s'})
-                               Merge (c)-[:PREVIOUSLYWORKEDAT]->(f)""" % (title, comp, loc, years)
+                               Merge (f)<-[:PREVIOUSLYWORKEDAT]-(c)""" % (title, comp, loc, years)
                 ret = neo4j_merge(graphDB, formerJob)
                 print("Neo4j inserted: %s" % ret)
 
@@ -159,7 +162,7 @@ if "__main__":
         except Exception as e:
             write_log(str(e))
             continue
-            
+
         try:
             bSkillList = []
             for item in skill:
