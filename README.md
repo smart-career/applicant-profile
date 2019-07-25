@@ -5,6 +5,7 @@
 + Jaeseung found a couple of errors in the code, specifically using d.get when d[] is all that is needed.
 + Also fixed an error with relationships between jobs and education
 + Mr. Song pushed a new cfg.json file to go along with the new get_people.py
++ Jaeseung identified the cause of business skills not showing up and helped me fix it.
 ### Removals:
 ### To Do:
 + Get newer data that includes job titles?
