@@ -1,6 +1,6 @@
 # Smart-Career Applicant Profile v1.9
 
-## Changelog v1.8
+## Changelog v1.9
 ### Additions/Changes:
 + Jaeseung found a couple of errors in the code, specifically using d.get when d[] is all that is needed.
 + Also fixed an error with relationships between jobs and education
