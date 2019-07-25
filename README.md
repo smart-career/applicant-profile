@@ -5,6 +5,7 @@
 + Upload to neo4j successful.
 + Extraction of nested dictionaries successful
 + Using my local database for now.
++ Got personal skills to surround the personal skill node... Business skills nowhere to be found.
 ### Removals:
 ### To Do:
 + Get newer data that includes job titles?
