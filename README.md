@@ -6,10 +6,11 @@
 + Also fixed an error with relationships between jobs and education
 + Mr. Song pushed a new cfg.json file to go along with the new get_people.py
 + Jaeseung identified the cause of business skills not showing up and helped me fix it.
++ Job titles are now showing, had to reach the end of the documents to get them.
 ### Removals:
 ### To Do:
 + Get newer data that includes job titles?
-+ Fix any formatting issues for our graphs
++ Fix any formatting issues for our graphs (Everything is not connected to each Job Title like originally planned).
 
 ## Changelog v1.8
 ### Additions/Changes:
