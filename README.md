@@ -1,31 +1,14 @@
-<<<<<<< HEAD
-# Smart-Career Scraper v1.1
+# Smart-Career Applicant Profile v1.9
 
-## Changelog v1.2:
-### Additions:
-+ Added direct upload of any job description to MongoDB (and fixed weird issues with it)
-+ Now ignores duplicates when adding data.
-+ Added a config file where the first line = job description and second line = period
-### Changes:
-+ No longer takes user input. Use config file instead.
-### Removals (Just commented out):
-+ None
-
-## Changelog v1.1:
-### Additions:
-+ Added direct upload of any job description to MongoDB
-+ Filters results to past week only.
-+ Added some comments to help understand code.
-### Changes:
-+ Changed hard limit to 100 job descriptions to A. Test and B. Avoid stalling.
-+ Currently testing getting rid of duplicates.
-### Removals (Just commented out):
-+ Got rid of period selection as we are focusing on past week for now.
-
-## Changelog v1.0:
-+ Initial scraper
-=======
-# Smart-Career Applicant Profile v1.8
+## Changelog v1.8
+### Additions/Changes:
++ Jaeseung found a couple of errors in the code, specifically using d.get when d[] is all that is needed.
++ Also fixed an error with relationships between jobs and education
++ Mr. Song pushed a new cfg.json file to go along with the new get_people.py
+### Removals:
+### To Do:
++ Get newer data that includes job titles?
++ Fix any formatting issues for our graphs
 
 ## Changelog v1.8
 ### Additions/Changes:
@@ -102,4 +85,3 @@ has no limit and therefore will take longer.
 
 ## Changelog v1.0:
 + Initial scraper
->>>>>>> 69fbffc7ae8814b6eeaaa7d0603d1f43bf56241c
