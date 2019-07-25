@@ -33,7 +33,7 @@ def mongodb_put_doc(doc):
         ret = re.inserted_id
         docNum += 1
     except:
-        ret = doc['JobID']
+        ret = doc['ProfileID']
 
     return ret
 
@@ -161,19 +161,18 @@ if "__main__":
             continue
 
         try:
-            pLabel = """Merge (p:'Personal Skills' {Name:'Personal Skills'})
-                        Merge (p)-[:PERSONAL SKILLS FOR]->(c)"""
+            pSkillList = []
             for item in otherSkills:
-                oSkill = item['Skills']
-                pSkills = """Merge (o:`Other Skills` {Skill:'%s'})
-                            Merge (o)-[:PARTOF]->(p)""" % (oSkill)
-                ret = neo4j_merge(graphDB, pSkills)
-                print("Neo4j inserted: %s" % ret)
-            
-            for item in interpersonal:
-                iSkill = item['Skills']
-                pSkills = """Merge (i:`Interpersonal Skills` {Skill:'%s'})
-                            Merge (i)-[:PARTOF]->(p)""" % (iSkill)
+                pSkillList.append(item['Skills'])
+
+            for item in interpersonal: 
+                pSkillList.append(item['Skills'])  
+
+            for skill in pSkillList:
+                pSkills = """Merge (p:`Personal Skills` {Name:'PersonalSkills'})
+                            Merge (p)-[:PERSONALSKILLSFOR]->(c)
+                            Merge (o:`Skills` {Skill:'%s'})
+                            Merge (o)-[:PARTOF]->(p)""" % (skill)
                 ret = neo4j_merge(graphDB, pSkills)
                 print("Neo4j inserted: %s" % ret)
     
@@ -182,29 +181,21 @@ if "__main__":
             continue
 
         try:
-            bLabel = """Merge (b:'Business Skills' {Name: 'Business Skills'})
-                        Merge (b)-[:BUSINESS SKILLS FOR]->(c)"""
+            bSkillList = []
             for item in skill:
-                skills = item['Skills']
-                bSkills = """Merge (s:`Skills` {Skill:'%s'})
-                            Merge (s)-[:PARTOF]->(b)""" % (skills)
-                ret = neo4j_merge(graphDB, bSkills)
-                print("Neo4j inserted: %s" % ret)
+                bSkillList.append(item['Skills'])
             
             for item in tool_tech:
-                tSkill = item['Skills']
-                bSkills = """Merge (t:`Tools and Technology` {Skill:'%s'})
-                             Merge (t)-[:PARTOF]->(b)""" % (tSkill)
-                ret = neo4j_merge(graphDB, bSkills)
-                print("Neo4j inserted: %s" % ret)
+                bSkillList.append(item['Skills'])
             
             for item in industryKnowledge:
-                if industryKnowledge is "":
-                    iSkill = "Not specified"
-                else:
-                    iSkill = item['Skills']
-                bSkills = """Merge (t:`Industry Knowledge` {Skill:'%s'})
-                             Merge (i)-[:PARTOF]->(b)""" % (iSkill)
+                bSkillList.append(item['Skills'])
+            
+            for skill in bSkillList:
+                bSkills = """Merge (b:`Business Skills` {Name: 'BusinessSkills'})
+                            Merge (b)-[:WORKRELATEDSKILLSFOR]->(c)
+                            Merge (t:`Skills` {Skill:'%s'})
+                            Merge (t)-[:PARTOF]->(b)""" % (skill)
                 ret = neo4j_merge(graphDB, bSkills)
                 print("Neo4j inserted: %s" % ret)
 
