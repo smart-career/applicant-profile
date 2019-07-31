@@ -155,14 +155,6 @@ def pscrape(config):
                 except:
                     ()
                 try:
-                    < h3
-                    class ="t-16 t-black t-bold" >
-                    < span
-                    class ="visually-hidden" > Company Name < / span >
-
-                    < span > Visa < / span >
-                < / h3 >
-                    
                     obj['Job Title'] = clean_item(browser.find_element_by_xpath("//h2[@class='mt1 t-18 t-black t-normal']").text)
                 except:
                     obj['Job Title'] = ''
