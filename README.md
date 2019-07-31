@@ -1,4 +1,15 @@
-# Smart-Career Applicant Profile v1.9
+# Smart-Career Applicant Profile v2.0
+
+## Changelog v2.0
+### Additions/Changes:
++ Got rid of endorsements as it is a useless statistic.
++ Company names should be fixed?
+### Removals:
++ app.json since we no longer need this backup.
++ cfg.txt since Mr. Song created a new JSON file.
+### To Do:
++ Fix bugs.
++ Get more Data.
 
 ## Changelog v1.9
 ### Additions/Changes:
