@@ -72,7 +72,7 @@ def pscrape(config):
     start_time = time.time()
     # driver download: https://github.com/mozilla/geckodriver/releases
     # windows \, Linux and Max /
-    driver = os.getcwd() + "\geckodriver.exe"
+    driver = os.getcwd() + "/geckodriver.exe"
     base_url = "https://www.linkedin.com"
     sign_in_url = "https://www.linkedin.com/uas/login?fromSignIn=true"
     people_data = []
@@ -146,19 +146,28 @@ def pscrape(config):
                     browser.find_element_by_xpath("//a[@class='lt-line-clamp__more']").click()
                 except:
                     ()
-
+                try:
+                    browser.find_element_by_xpath("//button[@class='pv-profile-section__see-more-inline pv-profile-section__text-truncate-toggle link']").click()
+                except:
+                    ()
                 try:
                     browser.find_element_by_xpath("//button[@class='pv-profile-section__card-action-bar pv-skills-section__additional-skills artdeco-container-card-action-bar']").click()
                 except:
                     ()
-
                 try:
+                    < h3
+                    class ="t-16 t-black t-bold" >
+                    < span
+                    class ="visually-hidden" > Company Name < / span >
+
+                    < span > Visa < / span >
+                < / h3 >
+                    
                     obj['Job Title'] = clean_item(browser.find_element_by_xpath("//h2[@class='mt1 t-18 t-black t-normal']").text)
                 except:
                     obj['Job Title'] = ''
-
                 try:
-                    obj['Company'] = clean_item(browser.find_element_by_xpath("//span[@class= 'lt-line-clamp__line lt-line-clamp__line--last']").text)
+                    obj['Company'] = clean_item(browser.find_element_by_xpath("//span[@class='t-16 t-black t-normal']").text)
                 except:
                     obj['Company'] = ''
 
