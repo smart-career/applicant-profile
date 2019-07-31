@@ -147,7 +147,7 @@ def pscrape(config):
                 except:
                     ()
                 try:
-                    browser.find_element_by_xpath("//button[@class='pv-profile-section__see-more-inline pv-profile-section__text-truncate-toggle link']").click()
+                    browser.find_element_by_xpath("//button[@class='pv-profile-section__see-more-inline pv-profile-section__text-truncate-toggle link link-without-hover-state']").click()
                 except:
                     ()
                 try:
