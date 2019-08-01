@@ -150,18 +150,11 @@ def pscrape(config):
                     browser.find_element_by_xpath("//button[@class='pv-profile-section__see-more-inline pv-profile-section__text-truncate-toggle link link-without-hover-state']").click()
                 except:
                     ()
-                try:
-                    browser.find_element_by_xpath("//button[@class='pv-profile-section__card-action-bar pv-skills-section__additional-skills artdeco-container-card-action-bar']").click()
-                except:
-                    ()
+
                 try:
                     obj['Job Title'] = clean_item(browser.find_element_by_xpath("//h2[@class='mt1 t-18 t-black t-normal']").text)
                 except:
                     obj['Job Title'] = ''
-                try:
-                    obj['Company'] = clean_item(browser.find_element_by_xpath("//span[@class='t-16 t-black t-normal']").text)
-                except:
-                    obj['Company'] = ''
 
                 try:
                     obj['Location'] = clean_item(browser.find_element_by_xpath("//li[@class='t-16 t-black t-normal inline-block']").text)
@@ -257,6 +250,11 @@ def pscrape(config):
                     education_obj = {}
 
                 obj['Education'] = education
+            
+                try:
+                    browser.find_element_by_xpath("//button[@class='pv-profile-section__card-action-bar pv-skills-section__additional-skills artdeco-container-card-action-bar artdeco-button artdeco-button--tertiary artdeco-button--3 artdeco-button--fluid']").click()
+                except:
+                    print("No Skills")
 
                 try:
                     skill_sets = browser.find_element_by_class_name("pv-skill-categories-section__top-skills").find_elements_by_class_name("pv-skill-category-entity__skill-wrapper")
@@ -271,11 +269,6 @@ def pscrape(config):
                         skills_obj['Skills'] = clean_item(skill_set.find_element_by_class_name('pv-skill-category-entity__name').text)
                     except:
                         skills_obj['Skills'] = ''
-
-                    try:
-                        skills_obj['Endorsements'] = clean_item(skill_set.find_element_by_class_name('pv-skill-category-entity__endorsement-count').text)
-                    except:
-                        skills_obj['Endorsements'] = ''
 
                     skills.append(skills_obj)
                     skills_obj = {}
@@ -298,12 +291,6 @@ def pscrape(config):
                                     g_skill.find_element_by_class_name('pv-skill-category-entity__name').text)
                             except:
                                 skills_obj['Skills'] = ''
-
-                            try:
-                                skills_obj['Endorsements'] = clean_item(
-                                    g_skill.find_element_by_class_name('pv-skill-category-entity__endorsement-count').text)
-                            except:
-                                skills_obj['Endorsements'] = ''
 
                             general_skills.append(skills_obj)
                             skills_obj = {}
