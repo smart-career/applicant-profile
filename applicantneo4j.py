@@ -14,7 +14,7 @@ from neo4j import GraphDatabase
 # Mongo DB fuctions
 def mongodb_init():
     client = MongoClient('mongodb://34.73.180.107:27017')
-    db = client.Backup
+    db = client.smartcareer
     return db
 
 
@@ -44,7 +44,7 @@ def mongodb_read_docs(col):
 
     try:
 
-        ret = col.find().limit(719)
+        ret = col.find().limit(100)
 
     except Exception as e:
         print(e)
@@ -54,9 +54,9 @@ def mongodb_read_docs(col):
 
 # Neo4j Functions
 def neo4j_init():
-    uri = "bolt://localhost"
+    uri = "bolt://localhost:7687"
     userName = "neo4j"
-    passwd = "Random1234"
+    passwd = "career"
     ndb = GraphDatabase.driver(uri, auth=(userName, passwd))
     return ndb
 
@@ -124,7 +124,7 @@ if "__main__":
         cqlNode = """Merge (c:`Job Title` {Name:'%s', Company:'%s'})
                  Merge (l:`Location` {Name:'%s'})
                  Merge (c)-[:LOCATEDAT]->(l)""" % (jobTitle, company, location)
-
+        #
         try:
             ret = neo4j_merge(graphDB, cqlNode)
 
@@ -140,9 +140,9 @@ if "__main__":
                 comp = item['Company'].replace("'","")
                 loc = item['Location']
                 years = item['Years']
-                formerJob = """MATCH (c:`Job Title`)
+                formerJob = """MATCH (c:`Job Title`{Name: '%s'})
                                Merge (f:`Former Job` {Name:'%s', Company:'%s', Location:'%s', Years:'%s'})
-                               Merge (c)-[:PREVIOUSLYWORKEDAT]->(f)""" % (title, comp, loc, years)
+                               Merge (f)-[:SWITHCEDTO]->(c)""" % (jobTitle, title, comp, loc, years)
                 ret = neo4j_merge(graphDB, formerJob)
                 print("Neo4j inserted: %s" % ret)
 
@@ -150,67 +150,67 @@ if "__main__":
             write_log(str(e))
             continue
         
-        try:
-            for item in education:
-                school = item['School']
-                degree = item['Degree'].replace("'","")
-                dateWent = item['Date Attended']
-                eduExp = """MATCH (c:`Job Title`)
-                            Merge (ed:`Education` {School:'%s', Degree:'%s', Attended:'%s'})
-                            Merge (c)-[:KNOWLEDGEGAINEDFROM]->(ed)""" % (school, degree, dateWent)
-                ret = neo4j_merge(graphDB, eduExp)
-                print("Neo4j inserted: %s" % ret)
+        # try:
+        #     for item in education:
+        #         school = item['School']
+        #         degree = item['Degree'].replace("'","")
+        #         dateWent = item['Date Attended']
+        #         eduExp = """MATCH (c:`Job Title`)
+        #                     Merge (ed:`Education` {School:'%s', Degree:'%s', Attended:'%s'})
+        #                     Merge (c)-[:KNOWLEDGEGAINEDFROM]->(ed)""" % (school, degree, dateWent)
+        #         ret = neo4j_merge(graphDB, eduExp)
+        #         print("Neo4j inserted: %s" % ret)
+        #
+        # except Exception as e:
+        #     write_log(str(e))
+        #     continue
 
-        except Exception as e:
-            write_log(str(e))
-            continue
+        # try:
+        #     bSkillList = []
+        #     for item in skill:
+        #         bSkillList.append(item['Skills'])
+        #
+        #     for item in tool_tech:
+        #         bSkillList.append(item['Skills'])
+        #
+        #     for item in industryKnowledge:
+        #         bSkillList.append(item['Skills'])
+        #
+        #     for skill in bSkillList:
+        #         bSkills = """
+        #                     MATCH (c:`Job Title`)
+        #                     Merge (b:`Business Skills` {Name: 'BusinessSkills'})
+        #                     Merge (b)-[:WORKRELATEDSKILLSFOR]->(c)
+        #                     Merge (t:`Skills` {Skill:'%s'})
+        #                     Merge (t)-[:PARTOF]->(b)""" % (skill)
+        #         ret = neo4j_merge(graphDB, bSkills)
+        #         print("Neo4j inserted: %s" % ret)
+        #
+        # except Exception as e:
+        #     write_log(str(e))
+        #     continue
 
-        try:
-            bSkillList = []
-            for item in skill:
-                bSkillList.append(item['Skills'])
-            
-            for item in tool_tech:
-                bSkillList.append(item['Skills'])
-            
-            for item in industryKnowledge:
-                bSkillList.append(item['Skills'])
-            
-            for skill in bSkillList:
-                bSkills = """
-                            MATCH (c:`Job Title`)
-                            Merge (b:`Business Skills` {Name: 'BusinessSkills'})
-                            Merge (b)-[:WORKRELATEDSKILLSFOR]->(c)
-                            Merge (t:`Skills` {Skill:'%s'})
-                            Merge (t)-[:PARTOF]->(b)""" % (skill)
-                ret = neo4j_merge(graphDB, bSkills)
-                print("Neo4j inserted: %s" % ret)
-
-        except Exception as e:
-            write_log(str(e))
-            continue
-
-        try:
-            pSkillList = []
-            for item in otherSkills:
-                pSkillList.append(item['Skills'])
-
-            for item in interpersonal: 
-                pSkillList.append(item['Skills'])  
-
-            for skill in pSkillList:
-                pSkills = """
-                            MATCH (c:`Job Title`)
-                            Merge (p:`Personal Skills` {Name:'PersonalSkills'})
-                            Merge (p)-[:PERSONALSKILLSFOR]->(c)
-                            Merge (o:`Skills` {Skill:'%s'})
-                            Merge (o)-[:PARTOF]->(p)""" % (skill)
-                ret = neo4j_merge(graphDB, pSkills)
-                print("Neo4j inserted: %s" % ret)
-    
-        except Exception as e:
-            write_log(str(e))
-            continue
+        # try:
+        #     pSkillList = []
+        #     for item in otherSkills:
+        #         pSkillList.append(item['Skills'])
+        #
+        #     for item in interpersonal:
+        #         pSkillList.append(item['Skills'])
+        #
+        #     for skill in pSkillList:
+        #         pSkills = """
+        #                     MATCH (c:`Job Title`)
+        #                     Merge (p:`Personal Skills` {Name:'PersonalSkills'})
+        #                     Merge (p)-[:PERSONALSKILLSFOR]->(c)
+        #                     Merge (o:`Skills` {Skill:'%s'})
+        #                     Merge (o)-[:PARTOF]->(p)""" % (skill)
+        #         ret = neo4j_merge(graphDB, pSkills)
+        #         print("Neo4j inserted: %s" % ret)
+        #
+        # except Exception as e:
+        #     write_log(str(e))
+        #     continue
 
 
 
