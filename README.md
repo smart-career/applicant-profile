@@ -4,6 +4,7 @@
 ### Additions/Changes:
 + Got rid of endorsements as it is a useless statistic.
 + Company names should be fixed?
++ Skills show more button should now be clicked to gather all skills
 ### Removals:
 + app.json since we no longer need this backup.
 + cfg.txt since Mr. Song created a new JSON file.
