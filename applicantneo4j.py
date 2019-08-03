@@ -148,19 +148,39 @@ if "__main__":
             loc_list.append(i['Location'])
             years_list.append(i['Years'])
             period_list.append(i['Period'])
-        asd = len(Job_list)
+
         try:
             for element in Job_list:
                 if len(Job_list) - 1 > index:
                     next_index = index + 1
-                    formerJob = """MATCH (c:`Job Title`{Name: '%s'})
+                    jobs = """MATCH (c:`Job Title`{Name: '%s'})
                                    Merge (f:`Job Title` {Name:'%s', Company:'%s', Location:'%s', Years:'%s', Period:'%s'})
                                    Merge (f)-[:SWITHCEDTO]->(c)""" % (Job_list[index], Job_list[next_index],
                                                                       comp_list[next_index], loc_list[next_index],
                                                                       years_list[next_index], period_list[next_index])
                     index = index + 1
-                    ret = neo4j_merge(graphDB, formerJob)
+                    ret = neo4j_merge(graphDB, jobs)
                     print("Neo4j inserted: %s" % ret)
+        except Exception as e:
+            # write_log(str(e))
+            print(e)
+            continue
+
+        try:
+            index = 0
+            for element in comp_list:
+                if len(comp_list) - 1 > index:
+                    companies = """MATCH (c:`Job Title`{Name: '%s'})
+                                   Merge (f:`Company` {Name:'%s'})
+                                   Merge (c)-[:WORK_AT]->(f)""" % (Job_list[index],
+                                                                      comp_list[index])
+                    index = index + 1
+                    ret = neo4j_merge(graphDB, companies)
+                    print("Neo4j inserted: %s" % ret)
+        except Exception as e:
+            # write_log(str(e))
+            print(e)
+            continue
 
         # try:
         #     for item in experience:
@@ -174,11 +194,11 @@ if "__main__":
         #                        Merge (f)-[:SWITHCEDTO]->(c)""" % (jobTitle, title, comp, loc, years, period)
         #         ret = neo4j_merge(graphDB, formerJob)
         #         print("Neo4j inserted: %s" % ret)
-
-        except Exception as e:
-            # write_log(str(e))
-            print(e)
-            continue
+        #
+        # except Exception as e:
+        #     # write_log(str(e))
+        #     print(e)
+        #     continue
 
         # try:
         #     for item in education:
