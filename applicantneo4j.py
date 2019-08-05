@@ -44,7 +44,7 @@ def mongodb_read_docs(col):
 
     try:
 
-        ret = col.find().limit(300)
+        ret = col.find().limit(3)
 
     except Exception as e:
         print(e)
@@ -112,7 +112,7 @@ if "__main__":
         if jobTitle == "":
             continue
         jobTitle = d['Job Title']
-        company = d['Company']
+        #company = d['Company']
         location = d['Location']
         experience = d.get('Experience')
         education = d.get('Education')
@@ -121,31 +121,31 @@ if "__main__":
         tool_tech = d.get('Tools \u0026 Technologies')
         interpersonal = d.get('Interpersonal Skills')
         otherSkills = d.get('Other Skills')
+        #
+        # cqlNode = """Merge (c:`Job Title` {Name:'%s', Company:'%s'})
+        #          Merge (l:`Location` {Name:'%s'})
+        #          Merge (c)-[:LOCATEDAT]->(l)""" % (jobTitle, company, location)
+        #
+        # try:
+        #     ret = neo4j_merge(graphDB, cqlNode)
+        #
+        # except Exception as e:
+        #     write_log(str(e))
+        #     continue
 
-        cqlNode = """Merge (c:`Job Title` {Name:'%s', Company:'%s'})
-                 Merge (l:`Location` {Name:'%s'})
-                 Merge (c)-[:LOCATEDAT]->(l)""" % (jobTitle, company, location)
-
-        try:
-            ret = neo4j_merge(graphDB, cqlNode)
-
-        except Exception as e:
-            write_log(str(e))
-            continue
-
-        print("Neo4j inserted: %s" % ret)
+        # print("Neo4j inserted: %s" % ret)
 
         Job_list = []
-        comp_list = []
-        loc_list = []
+        company_list = []
+        location_list = []
         years_list = []
         period_list = []
         index = 0
 
         for i in experience:
             Job_list.append(i['Job Title'])
-            comp_list.append(i['Company'].replace("'", ""))
-            loc_list.append(i['Location'])
+            company_list.append(i['Company'].replace("'", ""))
+            location_list.append(i['Location'])
             years_list.append(i['Years'])
             period_list.append(i['Period'])
 
@@ -153,10 +153,11 @@ if "__main__":
             for element in Job_list:
                 if len(Job_list) - 1 > index:
                     next_index = index + 1
-                    jobs = """MATCH (c:`Job Title`{Name: '%s'})
+                    jobs = """MERGE (c:`Job Title`{Name: '%s', Company:'%s', Location:'%s'})
                                    Merge (f:`Job Title` {Name:'%s', Company:'%s', Location:'%s', Years:'%s', Period:'%s'})
-                                   Merge (f)-[:SWITHCEDTO]->(c)""" % (Job_list[index], Job_list[next_index],
-                                                                      comp_list[next_index], loc_list[next_index],
+                                   Merge (f)-[:SWITHCEDTO]->(c)""" % (Job_list[index], company_list[index],
+                                                                      location_list[index], Job_list[next_index],
+                                                                      company_list[next_index], location_list[next_index],
                                                                       years_list[next_index], period_list[next_index])
                     index = index + 1
                     ret = neo4j_merge(graphDB, jobs)
@@ -167,16 +168,13 @@ if "__main__":
             continue
 
         try:
-            index = 0
-            for element in comp_list:
-                if len(comp_list) - 1 > index:
-                    companies = """MATCH (c:`Job Title`{Name: '%s'})
-                                   Merge (f:`Company` {Name:'%s'})
-                                   Merge (c)-[:WORK_AT]->(f)""" % (Job_list[index],
-                                                                      comp_list[index])
-                    index = index + 1
-                    ret = neo4j_merge(graphDB, companies)
-                    print("Neo4j inserted: %s" % ret)
+            for company in company_list:
+                index = company_list.index(company)
+                companies = """MATCH (j:`Job Title`{Name: '%s', Company:'%s'})
+                               Merge (c:`Company` {Name:'%s'})
+                               Merge (j)-[:WORK_AT]->(c)""" % (Job_list[index], company, company)
+                ret = neo4j_merge(graphDB, companies)
+                print("Neo4j inserted: %s" % ret)
         except Exception as e:
             # write_log(str(e))
             print(e)
@@ -215,24 +213,24 @@ if "__main__":
         #     write_log(str(e))
         #     continue
         #
-        # try:
-        #     bSkillList = []
-        #     for item in skill:
-        #         bSkillList.append(item['Skills'])
-        #
-        #     for skill in bSkillList:
-        #         bSkills = """
-        #                     MATCH (c:`Job Title`{Name: '%s'})
-        #                     Merge (b:`Business Skills` {Name: 'BusinessSkills%d'})
-        #                     Merge (b)-[:BUSINESS_SKILL]->(c)
-        #                     Merge (t:`Skills` {Skill:'%s'})
-        #                     Merge (t)-[:PARTOF]->(b)""" % (jobTitle, count, skill)
-        #         ret = neo4j_merge(graphDB, bSkills)
-        #         print("Neo4j inserted: %s" % ret)
-        #
-        # except Exception as e:
-        #     write_log(str(e))
-        #     continue
+        try:
+            bSkillList = []
+            for item in skill:
+                bSkillList.append(item['Skills'])
+
+            for skill in bSkillList:
+                bSkills = """
+                            MATCH (c:`Company`{Name: '%s'})
+                            Merge (b:`Business Skills` {Name: 'Business Skill', `Job Title`: '%s'})
+                            Merge (c)-[:BUSINESS_SKILL]->(b)
+                            Merge (t:`Skills` {Skill:'%s'})
+                            Merge (b)-[:PARTOF]->(t)""" % (company_list[0], Job_list[0], skill)
+                ret = neo4j_merge(graphDB, bSkills)
+                print("Neo4j inserted: %s" % ret)
+
+        except Exception as e:
+            write_log(str(e))
+            continue
 
         # try:
         #     bSkillList = []
