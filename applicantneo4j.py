@@ -44,7 +44,7 @@ def mongodb_read_docs(col):
 
     try:
 
-        ret = col.find().limit(3)
+        ret = col.find().limit(300)
 
     except Exception as e:
         print(e)
@@ -54,7 +54,7 @@ def mongodb_read_docs(col):
 
 # Neo4j Functions
 def neo4j_init():
-    uri = "bolt://localhost:7687"
+    uri = "bolt://34.66.112.119"
     userName = "neo4j"
     passwd = "SmartCareer0!"
     ndb = GraphDatabase.driver(uri, auth=(userName, passwd))
@@ -283,3 +283,5 @@ if "__main__":
 
     graphDB.close()
     print("completed")
+
+
