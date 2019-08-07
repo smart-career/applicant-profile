@@ -4,6 +4,7 @@ import sys
 import time
 import json
 import pprint
+import queue
 from selenium import webdriver
 from datetime import datetime
 from datetime import date
@@ -44,7 +45,7 @@ def mongodb_read_docs(col):
 
     try:
 
-        ret = col.find().limit(300)
+        ret = col.find().limit(3)
 
     except Exception as e:
         print(e)
@@ -54,7 +55,7 @@ def mongodb_read_docs(col):
 
 # Neo4j Functions
 def neo4j_init():
-    uri = "bolt://34.66.112.119"
+    uri = "bolt://localhost:7687"
     userName = "neo4j"
     passwd = "SmartCareer0!"
     ndb = GraphDatabase.driver(uri, auth=(userName, passwd))
@@ -100,6 +101,35 @@ def write_log(msg):
     ret = logf.write(msg)
     return ret
 
+def tokenize(temp):
+    tokens = re.split(r'\W+', temp)
+    return tokens
+
+def merge(list1, list2, list3, list4): #job_time, edu_time, edu_list, job_list
+    merged_list = []
+    i = 0 #for job
+    j = 0 #for edu
+    # 정렬되어 있는 list1과 list2의 원소들을 차례로 비교하여, 더 작은 원소를 merged_list에 추가하기
+    while i < len(list1) and j < len(list2):
+        job_year = tokenize(list1[i])[1]
+        edu_year = tokenize(list2[j])[0]
+
+        if job_year < edu_year:
+            merged_list.append(list3[j])
+            j += 1
+        else:
+            merged_list.append(list4[i])
+            i += 1
+    # list1에 남은 원소가 있다면, merged_list에 추가하기
+    if i < len(list4):
+        for k in list4[i:]:
+            merged_list.append(k)
+    # list2에 남은 원소가 있다면, merged_list에 추가하기
+    if j < len(list3):
+        for l in list3[j:]:
+            merged_list.append(l)
+    return merged_list
+
 if "__main__":
 
     print("Starting")
@@ -132,35 +162,54 @@ if "__main__":
         # except Exception as e:
         #     write_log(str(e))
         #     continue
-
         # print("Neo4j inserted: %s" % ret)
 
-        Job_list = []
+        job_list = []
+        job_time = []
+        job_n_edu_list = []
+        edu_list = []
+        edu_time = []
         company_list = []
         location_list = []
         years_list = []
         period_list = []
+        j_ed_queue = queue.Queue()
         index = 0
 
-        for i in experience:
-            Job_list.append(i['Job Title'])
-            company_list.append(i['Company'].replace("'", ""))
-            location_list.append(i['Location'])
-            years_list.append(i['Years'])
-            period_list.append(i['Period'])
+        for item in experience:
+            job_list.append(item['Job Title'])
+            job_time.append(item['Period'])
+            company_list.append(item['Company'].replace("'", ""))
+            location_list.append(item['Location'])
+            years_list.append(item['Years'])
+            period_list.append(item['Period'])
+            
+        for edu in education:
+            edu_time.append(edu['Date Attended'])
+            edu_list.append(edu['School'])
+
+        job_n_edu_list = merge(job_time, edu_time, edu_list, job_list)
 
         try:
-            for element in Job_list:
-                if len(Job_list) - 1 > index:
+            for element in job_n_edu_list:
+                if len(job_n_edu_list) - 1 > index:
                     next_index = index + 1
-                    jobs = """MERGE (c:`Job Title`{Name: '%s', Company:'%s', Location:'%s'})
-                                   Merge (f:`Job Title` {Name:'%s', Company:'%s', Location:'%s', Years:'%s', Period:'%s'})
-                                   Merge (f)-[:SWITHCEDTO]->(c)""" % (Job_list[index], company_list[index],
-                                                                      location_list[index], Job_list[next_index],
-                                                                      company_list[next_index], location_list[next_index],
-                                                                      years_list[next_index], period_list[next_index])
-                    index = index + 1
+                    if element == job_list[index]:
+                        jobs = """MERGE (c:`Job Title`{Name: '%s', Company:'%s', Location:'%s'})
+                                       Merge (f:`Job Title` {Name:'%s', Company:'%s', Location:'%s', Years:'%s', Period:'%s'})
+                                       Merge (f)-[:SWITHCEDTO]->(c)""" % (job_n_edu_list[index], company_list[index],
+                                                                          location_list[index], job_n_edu_list[next_index],
+                                                                          company_list[next_index], location_list[next_index],
+                                                                          years_list[next_index], period_list[next_index])
+                        index = index + 1
+                    else:
+                        jobs = """MERGE (c:`Education` {Name: '%s'})
+                                       Merge (f:`education` {Name:'%s'})
+                                       Merge (f)-[:SWITHCEDTO]->(c)""" % (job_n_edu_list[index], job_n_edu_list[next_index])
+
+                        index = index + 1
                     ret = neo4j_merge(graphDB, jobs)
+
                     print("Neo4j inserted: %s" % ret)
         except Exception as e:
             # write_log(str(e))
@@ -172,7 +221,7 @@ if "__main__":
                 index = company_list.index(company)
                 companies = """MATCH (j:`Job Title`{Name: '%s', Company:'%s'})
                                Merge (c:`Company` {Name:'%s'})
-                               Merge (j)-[:WORK_AT]->(c)""" % (Job_list[index], company, company)
+                               Merge (j)-[:WORK_AT]->(c)""" % (job_list[index], company, company)
                 ret = neo4j_merge(graphDB, companies)
                 print("Neo4j inserted: %s" % ret)
         except Exception as e:
@@ -224,7 +273,7 @@ if "__main__":
                             Merge (b:`Business Skills` {Name: 'Business Skill', `Job Title`: '%s'})
                             Merge (c)-[:BUSINESS_SKILL]->(b)
                             Merge (t:`Skills` {Skill:'%s'})
-                            Merge (b)-[:PARTOF]->(t)""" % (company_list[0], Job_list[0], skill)
+                            Merge (b)-[:PARTOF]->(t)""" % (company_list[0], job_list[0], skill)
                 ret = neo4j_merge(graphDB, bSkills)
                 print("Neo4j inserted: %s" % ret)
 
