@@ -4,7 +4,6 @@ import sys
 import time
 import json
 import pprint
-import queue
 from selenium import webdriver
 from datetime import datetime
 from datetime import date
@@ -45,7 +44,7 @@ def mongodb_read_docs(col):
 
     try:
 
-        ret = col.find().limit(3)
+        ret = col.find().limit(300)
 
     except Exception as e:
         print(e)
@@ -55,7 +54,7 @@ def mongodb_read_docs(col):
 
 # Neo4j Functions
 def neo4j_init():
-    uri = "bolt://localhost:7687"
+    uri = "bolt://34.66.112.119"
     userName = "neo4j"
     passwd = "SmartCareer0!"
     ndb = GraphDatabase.driver(uri, auth=(userName, passwd))
@@ -167,53 +166,82 @@ if "__main__":
         job_list = []
         job_time = []
         job_n_edu_list = []
-        edu_list = []
-        edu_time = []
         company_list = []
         location_list = []
         years_list = []
         period_list = []
-        j_ed_queue = queue.Queue()
-        index = 0
 
         for item in experience:
-            job_list.append(item['Job Title'])
+            job_list.append(item['Job Title'].replace("'", ""))
             job_time.append(item['Period'])
             company_list.append(item['Company'].replace("'", ""))
             location_list.append(item['Location'])
             years_list.append(item['Years'])
             period_list.append(item['Period'])
-            
+
+        edu_list = []
+        edu_time = []
+        edu_degree = []
         for edu in education:
             edu_time.append(edu['Date Attended'])
             edu_list.append(edu['School'])
+            edu_degree.append(edu['Degree'].replace("'", "").strip())
 
-        job_n_edu_list = merge(job_time, edu_time, edu_list, job_list)
+        if len(edu_time) != 0 and len(period_list) != 0:
+            try:
+                job_n_edu_list = merge(job_time, edu_time, edu_list, job_list)
+            except Exception as e:
+                #print(e)
+                #write_log(str(e))
+                continue
+
+        index = 0
+        next_index = 0
+        edu_index = 0
 
         try:
-            for element in job_n_edu_list:
+            for i in job_n_edu_list:
                 if len(job_n_edu_list) - 1 > index:
                     next_index = index + 1
-                    if element == job_list[index]:
-                        jobs = """MERGE (c:`Job Title`{Name: '%s', Company:'%s', Location:'%s'})
-                                       Merge (f:`Job Title` {Name:'%s', Company:'%s', Location:'%s', Years:'%s', Period:'%s'})
+                    if job_n_edu_list[index] in job_list and job_n_edu_list[next_index] in job_list:
+                        jobs_to_jobs = """MERGE (c:`Job Title`{Name: '%s', Company:'%s', Location:'%s'})
+                                       Merge (f:`Job Title`{Name:'%s', Company:'%s', Location:'%s', Years:'%s', Period:'%s'})
                                        Merge (f)-[:SWITHCEDTO]->(c)""" % (job_n_edu_list[index], company_list[index],
                                                                           location_list[index], job_n_edu_list[next_index],
                                                                           company_list[next_index], location_list[next_index],
                                                                           years_list[next_index], period_list[next_index])
-                        index = index + 1
-                    else:
-                        jobs = """MERGE (c:`Education` {Name: '%s'})
-                                       Merge (f:`education` {Name:'%s'})
-                                       Merge (f)-[:SWITHCEDTO]->(c)""" % (job_n_edu_list[index], job_n_edu_list[next_index])
+                        ret = neo4j_merge(graphDB, jobs_to_jobs)
+                    elif job_n_edu_list[index] == edu_list[edu_index] and len(edu_list) > 1:
+                        if job_n_edu_list[next_index] == edu_list[edu_index]:
+                            edu_to_edu = """MERGE (c:`Education`{Name: '%s', Degree: '%s'})
+                                           Merge (f:`FormerEducation`{Name:'%s', Degree: '%s'})
+                                           Merge (f)-[:Continued]->(c)""" % (job_n_edu_list[index], edu_degree[edu_index],
+                                                                              job_n_edu_list[next_index], edu_degree[edu_index+1])
+                            edu_index += 1
+                            ret = neo4j_merge(graphDB, edu_to_edu)
+                    elif job_n_edu_list[index] in job_list and job_n_edu_list[next_index] in edu_list:
+                        #if edu_degree[edu_index + 1] is not None:
+                        edu_to_jobs = """MERGE (c:`Job Title`{Name: '%s', Company:'%s', Location:'%s'})
+                                       Merge (f:`Education`{Name:'%s'})
+                                       Merge (f)-[:SWITHCEDTO]->(c)""" % (job_n_edu_list[index], company_list[index],
+                                                                          location_list[index], job_n_edu_list[next_index])
+                        edu_index += 1
+                        ret = neo4j_merge(graphDB, edu_to_jobs)
 
-                        index = index + 1
-                    ret = neo4j_merge(graphDB, jobs)
+                    elif job_n_edu_list[index] in edu_list and job_n_edu_list[next_index] in job_list:
+                        jobs_to_edu = """MERGE (c:`Education`{Name: '%s'})
+                                       Merge (f:`Job Title`{Name:'%s', Company:'%s', Location:'%s', Years:'%s', Period:'%s'})
+                                       Merge (f)-[:SWITHCEDTO]->(c)""" % (job_n_edu_list[index],
+                                                                          job_n_edu_list[next_index], company_list[next_index],
+                                                                          location_list[next_index], years_list[next_index],
+                                                                          period_list[next_index])
+                        ret = neo4j_merge(graphDB, jobs_to_edu)
 
-                    print("Neo4j inserted: %s" % ret)
+                    index = index + 1
+                print("Neo4j inserted: %s" % ret)
         except Exception as e:
             # write_log(str(e))
-            print(e)
+            #print(e)
             continue
 
         try:
@@ -226,7 +254,7 @@ if "__main__":
                 print("Neo4j inserted: %s" % ret)
         except Exception as e:
             # write_log(str(e))
-            print(e)
+            #print(e)
             continue
 
         # try:
