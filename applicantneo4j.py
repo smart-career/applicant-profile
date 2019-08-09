@@ -44,7 +44,7 @@ def mongodb_read_docs(col):
 
     try:
 
-        ret = col.find().limit(300)
+        ret = col.find()
 
     except Exception as e:
         print(e)
@@ -197,11 +197,11 @@ if "__main__":
             try:
                 job_n_edu_list = merge(job_time, edu_time, edu_list, job_list)
                 comp_n_edu_list = merge(job_time, edu_time, edu_list, company_list)
-                loc_n_edu_list = merge(location_list, edu_time, edu_list, location_list)
-                per_n_edu_list = merge(period_list, edu_time, edu_list, period_list)
+                loc_n_edu_list = merge(job_time, edu_time, edu_list, location_list)
+                per_n_edu_list = merge(job_time, edu_time, edu_list, period_list)
                 job_n_deg_list = merge(job_time, edu_time, edu_degree, job_list)
             except Exception as e:
-                #print(e)
+                print(e)
                 #write_log(str(e))
                 continue
 
@@ -214,14 +214,14 @@ if "__main__":
                 if element.startswith("j") and job_n_edu_list[next_index].startswith("j"):
                     jobs_to_jobs = """MERGE (c:`Job Title`{Name: '%s', Company:'%s', Location: '%s', Period: '%s'})
                                    Merge (f:`Job Title`{Name:'%s', Company: '%s', Location: '%s', Period: '%s'})
-                                   Merge (f)-[:SWITHCEDTO]->(c)""" % (element[1:], comp_n_edu_list[current_index][1:], loc_n_edu_list[current_index][1:], per_n_edu_list[current_index][:1],
-                                                                      job_n_edu_list[next_index][1:], comp_n_edu_list[next_index][1:], loc_n_edu_list[next_index][1:], per_n_edu_list[next_index][:1])
+                                   Merge (f)-[:SWITHCEDTO]->(c)""" % (element[1:], comp_n_edu_list[current_index][1:], loc_n_edu_list[current_index][1:], per_n_edu_list[current_index][1:],
+                                                                      job_n_edu_list[next_index][1:], comp_n_edu_list[next_index][1:], loc_n_edu_list[next_index][1:], per_n_edu_list[next_index][1:])
                     ret = neo4j_merge(graphDB, jobs_to_jobs)
 
                 elif element.startswith("j") and job_n_edu_list[next_index].startswith("e"):
                     edu_to_jobs = """MERGE (c:`Job Title`{Name: '%s', Company:'%s', Location: '%s', Period: '%s'})
                                    Merge (f:`Education`{Name:'%s', Degree: '%s'})
-                                   Merge (f)-[:SWITHCEDTO]->(c)""" % (element[1:], comp_n_edu_list[current_index][1:],loc_n_edu_list[current_index][1:], per_n_edu_list[current_index][:1],
+                                   Merge (f)-[:SWITHCEDTO]->(c)""" % (element[1:], comp_n_edu_list[current_index][1:],loc_n_edu_list[current_index][1:], per_n_edu_list[current_index][1:],
                                                                       job_n_edu_list[next_index][1:], job_n_deg_list[next_index][1:])
                     ret = neo4j_merge(graphDB, edu_to_jobs)
 
@@ -229,7 +229,7 @@ if "__main__":
                     jobs_to_edu = """MERGE (c:`Education`{Name: '%s', Degree: '%s'})
                                        Merge (f:`Job Title`{Name:'%s', Company: '%s', Location: '%s', Period: '%s'})
                                        Merge (f)-[:SWITHCEDTO]->(c)""" % (element[1:], job_n_deg_list[current_index][1:],
-                                                                          job_n_edu_list[next_index][1:], comp_n_edu_list[next_index][1:], loc_n_edu_list[next_index][1:], per_n_edu_list[next_index][:1])
+                                                                          job_n_edu_list[next_index][1:], comp_n_edu_list[next_index][1:], loc_n_edu_list[next_index][1:], per_n_edu_list[next_index][1:])
                     ret = neo4j_merge(graphDB, jobs_to_edu)
 
                 elif element.startswith("e") and job_n_edu_list[next_index].startswith("e"):
