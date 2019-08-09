@@ -11,7 +11,7 @@ from pymongo import MongoClient
 # Global Variable
 docNum = 0
 
-# REPLACE With your LinkedIn Credentials
+# REPLACE With your LinkedIn Credentia
 USERNAME = ""
 PASSWORD = ""
 
@@ -24,9 +24,23 @@ def mongodb_get_collection(db,item):
     col=db[item]
     return col
 
+def mongodb_read_docs(col):
+    db = mongodb_init()
+    col = mongodb_get_collection(db, col)
+
+    try:
+
+        ret = col.find().limit(53)
+
+    except Exception as e:
+        print(e)
+
+    return ret
+
+
 def mongodb_put_doc(doc):
     db=mongodb_init()
-    col=mongodb_get_collection(db,'applicantprofile')
+    col=mongodb_get_collection(db,'Jaeseung')
 
     try:
         global docNum
@@ -77,6 +91,7 @@ def pscrape(config):
     sign_in_url = "https://www.linkedin.com/uas/login?fromSignIn=true"
     people_data = []
     page = 1
+    count = 0
 
     USERNAME = config['User Name']
     PASSWORD = config['Password']
@@ -86,17 +101,17 @@ def pscrape(config):
     print('\nSTATUS: Opening website')
     browser = webdriver.Firefox(executable_path=driver)
     browser.get(sign_in_url)
-    time.sleep(1)
+    time.sleep(2)
 
     print('STATUS: Signing in')
     browser.find_element_by_id('username').send_keys(USERNAME)
-    time.sleep(1)
+    time.sleep(2)
 
     browser.find_element_by_id('password').send_keys(PASSWORD)
-    time.sleep(1)
+    time.sleep(2)
 
     browser.find_element_by_class_name('login__form_action_container ').click()
-    time.sleep(1)
+    time.sleep(2)
 
     print('STATUS: Searching for people\n')
     browser.get(people_search_url)
@@ -121,7 +136,7 @@ def pscrape(config):
         sys.exit(0)
 
     #Scraping up to 6 pages per search.
-    while True and page != 6:
+    while True and count != 6:
         print('STATUS: Scraping Page ' + str(page))
         links = []
         for link in people:
@@ -132,15 +147,13 @@ def pscrape(config):
                 ()
 
         for link in links:
-            obj = {}
-            browser.get(link)
-            time.sleep(2)
-
-            scroll_down_page(browser, 20)
-  
-            obj['ProfileID'] = link.split('/')[len(link.split('/'))-2]
-            if obj['ProfileID'] != "people":
+            obj = {'ProfileID': link.split('/')[len(link.split('/')) - 2]}
+            if obj['ProfileID'] != "people" and obj['ProfileID'] not in CHECKLIST:
+                browser.get(link)
+                time.sleep(2)
+                scroll_down_page(browser, 20)
                 print("STATUS: Scraping Profile_ID: {}".format(obj['ProfileID']))
+
 
                 try:
                     browser.find_element_by_xpath("//a[@class='lt-line-clamp__more']").click()
@@ -165,7 +178,7 @@ def pscrape(config):
                     obj['Profile Summary'] = clean_item(browser.find_element_by_class_name("pv-about__summary-text").text)
                 except:
                     obj['Profile Summary'] = ''
-                
+
                 try:
                     companies = browser.find_element_by_id("experience-section").find_elements_by_class_name("pv-profile-section__card-item-v2")
                 except:
@@ -250,7 +263,7 @@ def pscrape(config):
                     education_obj = {}
 
                 obj['Education'] = education
-            
+
                 try:
                     browser.find_element_by_xpath("//button[@class='pv-profile-section__card-action-bar pv-skills-section__additional-skills artdeco-container-card-action-bar artdeco-button artdeco-button--tertiary artdeco-button--3 artdeco-button--fluid']").click()
                 except:
@@ -311,13 +324,13 @@ def pscrape(config):
                     obj['Date Captured'] = ''
 
                 people_data.append(obj)
-            
+
                 doc_id=mongodb_put_doc(obj)
                 print('post id: ', doc_id)
             else:
                 print("STATUS: Skipping Profile_ID: {}".format(obj['ProfileID']))
-
         page += 1
+        count += 1
         next_page = people_search_url + '&page=' + str(page)
         browser.get(next_page)
         time.sleep(2)
@@ -330,6 +343,11 @@ def pscrape(config):
     browser.quit()
 
 if __name__ == '__main__':
+    docs = mongodb_read_docs('Jaeseung')
+    CHECKLIST = []
+    for d in docs:
+        CHECK = d['ProfileID']
+        CHECKLIST.append(CHECK)
     # Reads in the config file so input is automatic.
     with open("cfg.json") as json_cfg:
         d = json.load(json_cfg)
