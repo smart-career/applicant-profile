@@ -1,4 +1,13 @@
-# Smart-Career Applicant Profile v2.0
+# Smart-Career Applicant Profile v2.1
+
+## Changelog v2.1
+### Additions/Changes:
++ Scraper now skips profiles that have already been added to MongoDB.
++ Jae has been working on applicantneo4j.py and it is almost complete.
+### Removals:
+### To Do:
++ Fix bugs.
++ Get more Data.
 
 ## Changelog v2.0
 ### Additions/Changes:
