@@ -114,19 +114,25 @@ def merge(list1, list2, list3, list4): #job_time, edu_time, edu_list, job_list
         edu_year = tokenize(list2[j])[0]
 
         if job_year < edu_year:
-            merged_list.append(list3[j])
+            merged_list.append("e" + list3[j])
             j += 1
-        else:
-            merged_list.append(list4[i])
+        elif job_year > edu_year:
+            merged_list.append("j" + list4[i])
             i += 1
-    # list1에 남은 원소가 있다면, merged_list에 추가하기
+        else:
+            merged_list.append("j" + list4[i])
+            merged_list.append("e" + list3[j])
+            j += 1
+            i += 1
+
+    # job_time 에 남은 원소가 있다면, merged_list에 추가하기
     if i < len(list4):
         for k in list4[i:]:
-            merged_list.append(k)
-    # list2에 남은 원소가 있다면, merged_list에 추가하기
+            merged_list.append("j" + k)
+    # edu_time 에 남은 원소가 있다면, merged_list에 추가하기
     if j < len(list3):
         for l in list3[j:]:
-            merged_list.append(l)
+            merged_list.append("e" + l)
     return merged_list
 
 if "__main__":
@@ -185,63 +191,58 @@ if "__main__":
         for edu in education:
             edu_time.append(edu['Date Attended'])
             edu_list.append(edu['School'])
-            edu_degree.append(edu['Degree'].replace("'", "").strip())
+            edu_degree.append(edu['Degree'].replace("'", ""))
 
         if len(edu_time) != 0 and len(period_list) != 0:
             try:
                 job_n_edu_list = merge(job_time, edu_time, edu_list, job_list)
+                comp_n_edu_list = merge(job_time, edu_time, edu_list, company_list)
+                loc_n_edu_list = merge(location_list, edu_time, edu_list, location_list)
+                per_n_edu_list = merge(period_list, edu_time, edu_list, period_list)
+                job_n_deg_list = merge(job_time, edu_time, edu_degree, job_list)
             except Exception as e:
                 #print(e)
                 #write_log(str(e))
                 continue
 
-        index = 0
-        next_index = 0
-        edu_index = 0
+        current_index = 0
 
         try:
-            for i in job_n_edu_list:
-                if len(job_n_edu_list) - 1 > index:
-                    next_index = index + 1
-                    if job_n_edu_list[index] in job_list and job_n_edu_list[next_index] in job_list:
-                        jobs_to_jobs = """MERGE (c:`Job Title`{Name: '%s', Company:'%s', Location:'%s'})
-                                       Merge (f:`Job Title`{Name:'%s', Company:'%s', Location:'%s', Years:'%s', Period:'%s'})
-                                       Merge (f)-[:SWITHCEDTO]->(c)""" % (job_n_edu_list[index], company_list[index],
-                                                                          location_list[index], job_n_edu_list[next_index],
-                                                                          company_list[next_index], location_list[next_index],
-                                                                          years_list[next_index], period_list[next_index])
-                        ret = neo4j_merge(graphDB, jobs_to_jobs)
-                    elif job_n_edu_list[index] == edu_list[edu_index] and len(edu_list) > 1:
-                        if job_n_edu_list[next_index] == edu_list[edu_index]:
-                            edu_to_edu = """MERGE (c:`Education`{Name: '%s', Degree: '%s'})
-                                           Merge (f:`FormerEducation`{Name:'%s', Degree: '%s'})
-                                           Merge (f)-[:Continued]->(c)""" % (job_n_edu_list[index], edu_degree[edu_index],
-                                                                              job_n_edu_list[next_index], edu_degree[edu_index+1])
-                            edu_index += 1
-                            ret = neo4j_merge(graphDB, edu_to_edu)
-                    elif job_n_edu_list[index] in job_list and job_n_edu_list[next_index] in edu_list:
-                        #if edu_degree[edu_index + 1] is not None:
-                        edu_to_jobs = """MERGE (c:`Job Title`{Name: '%s', Company:'%s', Location:'%s'})
-                                       Merge (f:`Education`{Name:'%s'})
-                                       Merge (f)-[:SWITHCEDTO]->(c)""" % (job_n_edu_list[index], company_list[index],
-                                                                          location_list[index], job_n_edu_list[next_index])
-                        edu_index += 1
-                        ret = neo4j_merge(graphDB, edu_to_jobs)
+            for element in job_n_edu_list[:-1]:
+                next_index = current_index + 1
+                #job to job
+                if element.startswith("j") and job_n_edu_list[next_index].startswith("j"):
+                    jobs_to_jobs = """MERGE (c:`Job Title`{Name: '%s', Company:'%s', Location: '%s', Period: '%s'})
+                                   Merge (f:`Job Title`{Name:'%s', Company: '%s', Location: '%s', Period: '%s'})
+                                   Merge (f)-[:SWITHCEDTO]->(c)""" % (element[1:], comp_n_edu_list[current_index][1:], loc_n_edu_list[current_index][1:], per_n_edu_list[current_index][:1],
+                                                                      job_n_edu_list[next_index][1:], comp_n_edu_list[next_index][1:], loc_n_edu_list[next_index][1:], per_n_edu_list[next_index][:1])
+                    ret = neo4j_merge(graphDB, jobs_to_jobs)
 
-                    elif job_n_edu_list[index] in edu_list and job_n_edu_list[next_index] in job_list:
-                        jobs_to_edu = """MERGE (c:`Education`{Name: '%s'})
-                                       Merge (f:`Job Title`{Name:'%s', Company:'%s', Location:'%s', Years:'%s', Period:'%s'})
-                                       Merge (f)-[:SWITHCEDTO]->(c)""" % (job_n_edu_list[index],
-                                                                          job_n_edu_list[next_index], company_list[next_index],
-                                                                          location_list[next_index], years_list[next_index],
-                                                                          period_list[next_index])
-                        ret = neo4j_merge(graphDB, jobs_to_edu)
+                elif element.startswith("j") and job_n_edu_list[next_index].startswith("e"):
+                    edu_to_jobs = """MERGE (c:`Job Title`{Name: '%s', Company:'%s', Location: '%s', Period: '%s'})
+                                   Merge (f:`Education`{Name:'%s', Degree: '%s'})
+                                   Merge (f)-[:SWITHCEDTO]->(c)""" % (element[1:], comp_n_edu_list[current_index][1:],loc_n_edu_list[current_index][1:], per_n_edu_list[current_index][:1],
+                                                                      job_n_edu_list[next_index][1:], job_n_deg_list[next_index][1:])
+                    ret = neo4j_merge(graphDB, edu_to_jobs)
 
-                    index = index + 1
+                elif element.startswith("e") and job_n_edu_list[next_index].startswith("j"):
+                    jobs_to_edu = """MERGE (c:`Education`{Name: '%s', Degree: '%s'})
+                                       Merge (f:`Job Title`{Name:'%s', Company: '%s', Location: '%s', Period: '%s'})
+                                       Merge (f)-[:SWITHCEDTO]->(c)""" % (element[1:], job_n_deg_list[current_index][1:],
+                                                                          job_n_edu_list[next_index][1:], comp_n_edu_list[next_index][1:], loc_n_edu_list[next_index][1:], per_n_edu_list[next_index][:1])
+                    ret = neo4j_merge(graphDB, jobs_to_edu)
+
+                elif element.startswith("e") and job_n_edu_list[next_index].startswith("e"):
+                    edu_to_edu = """MERGE (c:`Education`{Name: '%s', Degree: '%s'})
+                                       Merge (f:`Education`{Name:'%s', Degree: '%s'})
+                                       Merge (f)-[:SWITHCEDTO]->(c)""" % (element[1:], job_n_deg_list[current_index][1:],
+                                                                          job_n_edu_list[next_index][1:], job_n_deg_list[next_index][1:])
+                    ret = neo4j_merge(graphDB, edu_to_edu)
+                current_index += 1
                 print("Neo4j inserted: %s" % ret)
         except Exception as e:
             # write_log(str(e))
-            #print(e)
+            print(e)
             continue
 
         try:
@@ -254,7 +255,7 @@ if "__main__":
                 print("Neo4j inserted: %s" % ret)
         except Exception as e:
             # write_log(str(e))
-            #print(e)
+            # print(e)
             continue
 
         # try:
