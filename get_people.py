@@ -136,7 +136,7 @@ def pscrape(config):
         sys.exit(0)
 
     #Scraping up to 6 pages per search.
-    while True and count != 6:
+    while True and count != 10:
         print('STATUS: Scraping Page ' + str(page))
         links = []
         for link in people:
@@ -154,30 +154,23 @@ def pscrape(config):
                 scroll_down_page(browser, 20)
                 print("STATUS: Scraping Profile_ID: {}".format(obj['ProfileID']))
 
-
                 try:
                     browser.find_element_by_xpath("//a[@class='lt-line-clamp__more']").click()
                 except:
                     ()
                 try:
-                    browser.find_element_by_xpath("//button[@class='pv-profile-section__see-more-inline pv-profile-section__text-truncate-toggle link link-without-hover-state']").click()
+                    browser.find_element_by_xpath(
+                        "//button[@class='pv-profile-section__see-more-inline pv-profile-section__text-truncate-toggle link link-without-hover-state']").click()
                 except:
                     ()
 
-                try:
-                    obj['Job Title'] = clean_item(browser.find_element_by_xpath("//h2[@class='mt1 t-18 t-black t-normal']").text)
-                except:
-                    obj['Job Title'] = ''
+                time.sleep(2)
 
                 try:
-                    obj['Location'] = clean_item(browser.find_element_by_xpath("//li[@class='t-16 t-black t-normal inline-block']").text)
+                    browser.find_element_by_xpath(
+                        "//button[@class='pv-profile-section__see-more-inline pv-profile-section__text-truncate-toggle link link-without-hover-state']").click()
                 except:
-                    obj['Location'] = ''
-
-                try:
-                    obj['Profile Summary'] = clean_item(browser.find_element_by_class_name("pv-about__summary-text").text)
-                except:
-                    obj['Profile Summary'] = ''
+                    ()
 
                 try:
                     companies = browser.find_element_by_id("experience-section").find_elements_by_class_name("pv-profile-section__card-item-v2")
@@ -188,40 +181,100 @@ def pscrape(config):
                 experience_obj = {}
 
                 for company in companies:
-                    try:
-                        experience_obj['Job Title'] = clean_item(company.find_element_by_tag_name('h3').text)
-                    except:
-                        experience_obj['Job Title'] = ''
+                    r = clean_item(company.find_element_by_tag_name('h3').text)
+                    if "Company Name" in r:
+                        try:
+                            roles = browser.find_element_by_id("experience-section").find_elements_by_class_name(
+                                "pv-entity__role-details-container")
+                        except:
+                            roles = []
+                        for role in roles:
+                            try:
+                                experience_obj['Job Title'] = clean_item(role.find_element_by_tag_name('h3').text).replace('Title ', '')
+                            except:
+                                experience_obj['Job Title'] = ''
 
-                    try:
-                        experience_obj['Company'] = clean_item(company.find_element_by_class_name('pv-entity__secondary-title').text)
-                    except:
-                        experience_obj['Company'] = ''
+                            try:
+                                experience_obj['Company'] = clean_item(company.find_element_by_tag_name('h3').text).replace('Company Name ', '')
+                            except:
+                                experience_obj['Company'] = ''
 
-                    try:
-                        experience_obj['Period'] = clean_item(company.find_element_by_class_name('pv-entity__date-range').text).replace('Dates Employed ', '')
-                    except:
-                        experience_obj['Period'] = ''
+                            try:
+                                experience_obj['Location'] = clean_item(role.find_element_by_class_name('pv-entity__location').text).replace('Location ', '')
+                            except:
+                                experience_obj['Location'] = ''
 
-                    try:
-                        experience_obj['Years'] = clean_item(company.find_element_by_class_name("pv-entity__bullet-item-v2").text)
-                    except:
-                        experience_obj['Years'] = ''
+                            try:
+                                experience_obj['Period'] = clean_item(
+                                    role.find_element_by_class_name('pv-entity__date-range').text).replace('Dates Employed ', '')
+                            except:
+                                experience_obj['Period'] = ''
 
-                    try:
-                        experience_obj['Location'] = clean_item(company.find_element_by_class_name('pv-entity__location').text).replace('Location ', '')
-                    except:
-                        experience_obj['Location'] = ''
+                            try:
+                                experience_obj['Years'] = clean_item(role.find_element_by_class_name("pv-entity__bullet-item-v2").text)
+                            except:
+                                experience_obj['Years'] = ''
 
-                    try:
-                        experience_obj['Description'] = clean_item(company.find_element_by_class_name('pv-entity__description').text)
-                    except:
-                        experience_obj['Description'] = ''
+                            try:
+                                experience_obj['Description'] = clean_item(role.find_element_by_class_name('pv-entity__description').text)
+                            except:
+                                experience_obj['Description'] = ''
 
-                    experience.append(experience_obj)
-                    experience_obj = {}
+                            experience.append(experience_obj)
+                            experience_obj = {}
 
+                    else:
+                        try:
+                            experience_obj['Job Title'] = clean_item(company.find_element_by_tag_name('h3').text)
+                        except:
+                            experience_obj['Job Title'] = ''
+
+                        try:
+                            experience_obj['Company'] = clean_item(company.find_element_by_class_name('pv-entity__secondary-title').text)
+                        except:
+                            experience_obj['Company'] = ''
+
+                        try:
+                            experience_obj['Location'] = clean_item(company.find_element_by_class_name('pv-entity__location').text).replace('Location ', '')
+                        except:
+                            experience_obj['Location'] = ''
+
+                        try:
+                            experience_obj['Period'] = clean_item(
+                                company.find_element_by_class_name('pv-entity__date-range').text).replace('Dates Employed ', '')
+                        except:
+                            experience_obj['Period'] = ''
+
+                        try:
+                            experience_obj['Years'] = clean_item(company.find_element_by_class_name("pv-entity__bullet-item-v2").text)
+                        except:
+                            experience_obj['Years'] = ''
+
+                        try:
+                            experience_obj['Description'] = clean_item(company.find_element_by_class_name('pv-entity__description').text)
+                        except:
+                            experience_obj['Description'] = ''
+
+                        experience.append(experience_obj)
+                        experience_obj = {}
+
+                obj = experience[0]
+                try:
+                    obj['Profile Summary'] = clean_item(
+                        browser.find_element_by_class_name("pv-about__summary-text").text)
+                except:
+                    obj['Profile Summary'] = ''
+                obj['ProfileID'] = link.split('/')[len(link.split('/')) - 2]
+                del obj['Description']
+                del experience[0]
                 obj['Experience'] = experience
+                try:
+                    browser.find_element_by_xpath(
+                        "//button[@class='pv-profile-section__see-more-inline pv-profile-section__text-truncate-toggle link link-without-hover-state']").click()
+                except:
+                    ()
+
+                time.sleep(2)
 
                 try:
                     institutes = browser.find_element_by_id("education-section").find_elements_by_class_name("pv-entity__summary-info")
@@ -232,35 +285,30 @@ def pscrape(config):
                 education_obj = {}
 
                 for institute in institutes:
-                    try:
-                        education_obj['School'] = clean_item(institute.find_element_by_xpath("//h3[@class='pv-entity__school-name t-16 t-black t-bold']").text)
-                    except:
-                        education_obj['School'] = ''
+                    education_obj['School'] = clean_item(institute.find_element_by_tag_name('h3').text)
+                    if "High School" not in education_obj['School']:
+                        try:
+                            education_obj['School'] = clean_item(institute.find_element_by_tag_name('h3').text)
+                        except:
+                            education_obj['School'] = ''
 
-                    try:
-                        degree_name = clean_item(institute.find_element_by_class_name('pv-entity__degree-name').text).replace('Degree Name ', '')
-                    except:
-                        degree_name = ''
+                        try:
+                            education_obj['Degree'] = clean_item(institute.find_element_by_class_name('pv-entity__degree-name').text).replace('Degree Name ', '')
+                        except:
+                            education_obj['Degree'] = ''
 
-                    try:
-                        field_of_study = clean_item(institute.find_element_by_class_name('pv-entity__fos').text).replace('Field Of Study ', '')
-                    except:
-                        field_of_study = ''
+                        try:
+                            education_obj['Major'] = clean_item(institute.find_element_by_class_name('pv-entity__fos').text).replace('Field Of Study ', '')
+                        except:
+                            education_obj['Major'] = ''
 
-                    try:
-                        grade = clean_item(institute.find_element_by_class_name('pv-entity__grade').text).replace('Grade ', '')
-                    except:
-                        grade = ''
+                        try:
+                            education_obj['Date Attended'] = clean_item(institute.find_element_by_class_name('pv-entity__dates').text).replace('Dates attended or expected graduation ', '')
+                        except:
+                            education_obj['Date Attended'] = ''
 
-                    education_obj['Degree'] = degree_name+' '+field_of_study+' '+grade
-
-                    try:
-                        education_obj['Date Attended'] = clean_item(institute.find_element_by_class_name('pv-entity__dates').text).replace('Dates attended or expected graduation ', '')
-                    except:
-                        education_obj['Date Attended'] = ''
-
-                    education.append(education_obj)
-                    education_obj = {}
+                        education.append(education_obj)
+                        education_obj = {}
 
                 obj['Education'] = education
 
@@ -346,8 +394,11 @@ if __name__ == '__main__':
     docs = mongodb_read_docs('Jaeseung')
     CHECKLIST = []
     for d in docs:
-        CHECK = d['ProfileID']
-        CHECKLIST.append(CHECK)
+        try:
+            CHECK = d['ProfileID']
+            CHECKLIST.append(CHECK)
+        except:
+            CHECK = None
     # Reads in the config file so input is automatic.
     with open("cfg.json") as json_cfg:
         d = json.load(json_cfg)
