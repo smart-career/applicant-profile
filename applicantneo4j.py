@@ -25,7 +25,7 @@ def mongodb_get_collection(db, item):
 
 def mongodb_put_doc(doc):
     db = mongodb_init()
-    col = mongodb_get_collection(db, 'applicantprofile')
+    col = mongodb_get_collection(db, 'Applicantprofile')
 
     try:
         global docNum
@@ -44,7 +44,7 @@ def mongodb_read_docs(col):
 
     try:
 
-        ret = col.find()
+        ret = col.find().limit(100)
 
     except Exception as e:
         print(e)
@@ -138,7 +138,7 @@ def merge(list1, list2, list3, list4): #job_time, edu_time, edu_list, job_list
 if "__main__":
 
     print("Starting")
-    docs = mongodb_read_docs('applicantprofile')
+    docs = mongodb_read_docs('Applicantprofile')
     graphDB = neo4j_init()
     count = 0
     for d in docs:
@@ -147,7 +147,6 @@ if "__main__":
         if jobTitle == "":
             continue
         jobTitle = d['Job Title']
-        #company = d['Company']
         location = d['Location']
         experience = d.get('Experience')
         education = d.get('Education')
@@ -169,7 +168,7 @@ if "__main__":
             job_list.append(item['Job Title'].replace("'", ""))
             job_time.append(item['Period'])
             company_list.append(item['Company'].replace("'", ""))
-            location_list.append(item['Location'])
+            location_list.append(item['Location'].replace("'", ""))
             years_list.append(item['Years'])
             period_list.append(item['Period'])
 
@@ -178,7 +177,7 @@ if "__main__":
         edu_degree = []
         for edu in education:
             edu_time.append(edu['Date Attended'])
-            edu_list.append(edu['School'])
+            edu_list.append(edu['School'].replace("'", ""))
             edu_degree.append(edu['Degree'].replace("'", ""))
 
         if len(edu_time) != 0 and len(period_list) != 0:
@@ -248,22 +247,39 @@ if "__main__":
 
 
         try:
-            bSkillList = []
+            SkillList = []
             for item in skill:
-                bSkillList.append(item['Skills'])
+                SkillList.append(item['Skills'])
 
-            for skill in bSkillList:
-                bSkills = """
+            for skill in SkillList:
+                Skills = """
                             MATCH (c:`Company`{Name: '%s'})
-                            Merge (b:`Business Skills` {Name: 'Business Skill', `Job Title`: '%s'})
-                            Merge (c)-[:BUSINESS_SKILL]->(b)
-                            Merge (t:`Skills` {Skill:'%s'})
+                            Merge (b:`Skills` {Name: 'Skills', `Job Title`: '%s'})
+                            Merge (c)-[:REQUIRES]->(b)
+                            Merge (t:`Skill` {Skill:'%s'})
                             Merge (b)-[:PARTOF]->(t)""" % (company_list[0], job_list[0], skill)
-                ret = neo4j_merge(graphDB, bSkills)
+                ret = neo4j_merge(graphDB, Skills)
                 print("Neo4j inserted: %s" % ret)
 
         except Exception as e:
             write_log(str(e))
+            print(e)
+            continue
+
+        try:
+            for loc in location_list:
+                if loc != '':
+                    index = location_list.index(loc)
+                    Locations = """
+                                MATCH (c:`Company`{Name: '%s'})
+                                Merge (l:`Location` {Name: '%s'})
+                                Merge (c)-[:LOCATED_AT]->(l)""" % (company_list[index], loc)
+                    ret = neo4j_merge(graphDB, Locations)
+                    print("Neo4j inserted: %s" % ret)
+
+        except Exception as e:
+            # write_log(str(e))
+            print(e)
             continue
 
     graphDB.close()
