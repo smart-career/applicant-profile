@@ -44,7 +44,7 @@ def mongodb_read_docs(col):
 
     try:
 
-        ret = col.find().limit(100)
+        ret = col.find()
 
     except Exception as e:
         print(e)
@@ -199,24 +199,24 @@ if "__main__":
                 next_index = current_index + 1
                 #job to job
                 if element.startswith("j") and job_n_edu_list[next_index].startswith("j"):
-                    jobs_to_jobs = """MERGE (c:`Job Title`{Name: '%s', Company:'%s', Location: '%s', Period: '%s'})
-                                   Merge (f:`Job Title`{Name:'%s', Company: '%s', Location: '%s', Period: '%s'})
-                                   Merge (f)-[:SWITHCEDTO]->(c)""" % (element[1:], comp_n_edu_list[current_index][1:], loc_n_edu_list[current_index][1:], per_n_edu_list[current_index][1:],
-                                                                      job_n_edu_list[next_index][1:], comp_n_edu_list[next_index][1:], loc_n_edu_list[next_index][1:], per_n_edu_list[next_index][1:])
+                    jobs_to_jobs = """MERGE (c:`Job Title`{Name: '%s', Company:'%s', Location: '%s'})
+                                   Merge (f:`Job Title`{Name:'%s', Company: '%s', Location: '%s'})
+                                   Merge (f)-[:SWITHCEDTO]->(c)""" % (element[1:], comp_n_edu_list[current_index][1:], loc_n_edu_list[current_index][1:],
+                                                                      job_n_edu_list[next_index][1:], comp_n_edu_list[next_index][1:], loc_n_edu_list[next_index][1:])
                     ret = neo4j_merge(graphDB, jobs_to_jobs)
 
                 elif element.startswith("j") and job_n_edu_list[next_index].startswith("e"):
-                    edu_to_jobs = """MERGE (c:`Job Title`{Name: '%s', Company:'%s', Location: '%s', Period: '%s'})
+                    edu_to_jobs = """MERGE (c:`Job Title`{Name: '%s', Company:'%s', Location: '%s'})
                                    Merge (f:`Education`{Name:'%s', Degree: '%s'})
-                                   Merge (f)-[:SWITHCEDTO]->(c)""" % (element[1:], comp_n_edu_list[current_index][1:],loc_n_edu_list[current_index][1:], per_n_edu_list[current_index][1:],
+                                   Merge (f)-[:SWITHCEDTO]->(c)""" % (element[1:], comp_n_edu_list[current_index][1:],loc_n_edu_list[current_index][1:],
                                                                       job_n_edu_list[next_index][1:], job_n_deg_list[next_index][1:])
                     ret = neo4j_merge(graphDB, edu_to_jobs)
 
                 elif element.startswith("e") and job_n_edu_list[next_index].startswith("j"):
                     jobs_to_edu = """MERGE (c:`Education`{Name: '%s', Degree: '%s'})
-                                       Merge (f:`Job Title`{Name:'%s', Company: '%s', Location: '%s', Period: '%s'})
+                                       Merge (f:`Job Title`{Name:'%s', Company: '%s', Location: '%s'})
                                        Merge (f)-[:SWITHCEDTO]->(c)""" % (element[1:], job_n_deg_list[current_index][1:],
-                                                                          job_n_edu_list[next_index][1:], comp_n_edu_list[next_index][1:], loc_n_edu_list[next_index][1:], per_n_edu_list[next_index][1:])
+                                                                          job_n_edu_list[next_index][1:], comp_n_edu_list[next_index][1:], loc_n_edu_list[next_index][1:])
                     ret = neo4j_merge(graphDB, jobs_to_edu)
 
                 elif element.startswith("e") and job_n_edu_list[next_index].startswith("e"):
