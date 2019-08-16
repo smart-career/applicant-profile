@@ -30,7 +30,7 @@ def mongodb_read_docs(col):
 
     try:
 
-        ret = col.find().limit(53)
+        ret = col.find().limit(5000)
 
     except Exception as e:
         print(e)
@@ -40,7 +40,7 @@ def mongodb_read_docs(col):
 
 def mongodb_put_doc(doc):
     db=mongodb_init()
-    col=mongodb_get_collection(db,'Jaeseung')
+    col=mongodb_get_collection(db,'Applicantprofile')
 
     try:
         global docNum
@@ -136,7 +136,7 @@ def pscrape(config):
         sys.exit(0)
 
     #Scraping up to 6 pages per search.
-    while True and count != 10:
+    while True and count < 80:
         print('STATUS: Scraping Page ' + str(page))
         links = []
         for link in people:
@@ -150,7 +150,7 @@ def pscrape(config):
             obj = {'ProfileID': link.split('/')[len(link.split('/')) - 2]}
             if obj['ProfileID'] != "people" and obj['ProfileID'] not in CHECKLIST:
                 browser.get(link)
-                time.sleep(2)
+                time.sleep(1)
                 scroll_down_page(browser, 20)
                 print("STATUS: Scraping Profile_ID: {}".format(obj['ProfileID']))
 
@@ -164,7 +164,7 @@ def pscrape(config):
                 except:
                     ()
 
-                time.sleep(2)
+                time.sleep(1)
 
                 try:
                     browser.find_element_by_xpath(
@@ -173,7 +173,7 @@ def pscrape(config):
                     ()
 
                 try:
-                    companies = browser.find_element_by_id("experience-section").find_elements_by_class_name("pv-profile-section__card-item-v2")
+                    companies = browser.find_element_by_id("experience-section").find_elements_by_class_name("pv-entity__position-group-pager")
                 except:
                     companies = []
 
@@ -184,7 +184,7 @@ def pscrape(config):
                     r = clean_item(company.find_element_by_tag_name('h3').text)
                     if "Company Name" in r:
                         try:
-                            roles = browser.find_element_by_id("experience-section").find_elements_by_class_name(
+                            roles = company.find_elements_by_class_name(
                                 "pv-entity__role-details-container")
                         except:
                             roles = []
@@ -265,7 +265,6 @@ def pscrape(config):
                 except:
                     obj['Profile Summary'] = ''
                 obj['ProfileID'] = link.split('/')[len(link.split('/')) - 2]
-                del obj['Description']
                 del experience[0]
                 obj['Experience'] = experience
                 try:
@@ -273,8 +272,12 @@ def pscrape(config):
                         "//button[@class='pv-profile-section__see-more-inline pv-profile-section__text-truncate-toggle link link-without-hover-state']").click()
                 except:
                     ()
-
-                time.sleep(2)
+                time.sleep(1)
+                try:
+                    browser.find_element_by_xpath(
+                        "//button[@class='pv-profile-section__see-more-inline pv-profile-section__text-truncate-toggle link link-without-hover-state']").click()
+                except:
+                    ()
 
                 try:
                     institutes = browser.find_element_by_id("education-section").find_elements_by_class_name("pv-entity__summary-info")
@@ -295,11 +298,25 @@ def pscrape(config):
                         try:
                             education_obj['Degree'] = clean_item(institute.find_element_by_class_name('pv-entity__degree-name').text).replace('Degree Name ', '')
                         except:
+                            try:
+                                degree = clean_item(institute.find_element_by_class_name('pv-entity__fos').text).replace('Field Of Study ', '')
+                                if ' in ' in degree:
+                                    e = degree.split(' in ')
+                                    education_obj['Degree'] = e[0]
+                            except:
+                                education_obj['Degree'] = ''
+
                             education_obj['Degree'] = ''
 
                         try:
                             education_obj['Major'] = clean_item(institute.find_element_by_class_name('pv-entity__fos').text).replace('Field Of Study ', '')
                         except:
+                            try:
+                                major = education_obj['Degree'].split(' in ')
+                                education_obj['Major'] = major[1]
+                            except:
+                                education_obj['Major'] = ''
+
                             education_obj['Major'] = ''
 
                         try:
@@ -307,10 +324,105 @@ def pscrape(config):
                         except:
                             education_obj['Date Attended'] = ''
 
+                        if ' in ' in education_obj['Degree']:
+                            g = education_obj['Degree'].split(' in ')
+                            education_obj['Degree'] = g[0]
+
+                        elif ' in ' in education_obj['Major']:
+                            m = education_obj['Major'].split(' in ')
+                            education_obj['Major'] = m[1]
+
                         education.append(education_obj)
                         education_obj = {}
 
                 obj['Education'] = education
+
+                try:
+                    browser.find_element_by_xpath(
+                        "//button[@class='pv-profile-section__see-more-inline pv-profile-section__text-truncate-toggle link link-without-hover-state']").click()
+                except:
+                    ()
+                time.sleep(1)
+                try:
+                    browser.find_element_by_xpath(
+                        "//button[@class='pv-profile-section__see-more-inline pv-profile-section__text-truncate-toggle link link-without-hover-state']").click()
+                except:
+                    ()
+
+                time.sleep(1)
+                try:
+                    browser.find_element_by_xpath(
+                        "//button[@class='pv-profile-section__see-more-inline pv-profile-section__text-truncate-toggle link link-without-hover-state']").click()
+                except:
+                    ()
+
+                try:
+                    certifications = browser.find_element_by_id("certifications-section").find_elements_by_class_name("pv-profile-section__sortable-item")
+                except:
+                    certifications = []
+
+                license = []
+                license_obj = {}
+
+                for certification in certifications:
+                    try:
+                        license_obj['Name'] = clean_item(certification.find_element_by_tag_name('h3').text)
+                    except:
+                        license_obj['Name'] = ''
+                    try:
+                        license_obj['Issuing Authority'] = clean_item(certification.find_element_by_tag_name('p').text).replace('Issuing authority ', '')
+                    except:
+                        license_obj['Issuing Authority'] = ''
+
+                    license.append(license_obj)
+                    license_obj = {}
+
+                obj['Licenses & Certifications'] = license
+
+                try:
+                    organizations = browser.find_element_by_class_name("volunteering-section").find_elements_by_class_name("pv-entity__summary-info")
+                except:
+                    organizations = []
+
+                volunteer = []
+                volunteer_obj = {}
+
+                for organization in organizations:
+                    try:
+                        volunteer_obj['Job Title'] = clean_item(organization.find_element_by_tag_name('h3').text)
+                    except:
+                        volunteer_obj['Job Title'] = ''
+
+                    try:
+                        volunteer_obj['Organization'] = clean_item(organization.find_element_by_class_name('pv-entity__secondary-title').text)
+                    except:
+                        volunteer_obj['Organization'] = ''
+
+                    try:
+                        volunteer_obj['Period'] = clean_item(
+                            organization.find_element_by_class_name('pv-entity__date-range').text).replace('Dates volunteered ', '')
+                    except:
+                        volunteer_obj['Period'] = ''
+
+                    try:
+                        volunteer_obj['Years'] = clean_item(organization.find_element_by_class_name("pv-entity__bullet-item").text)
+                    except:
+                        volunteer_obj['Years'] = ''
+
+                    try:
+                        volunteer_obj['Field'] = clean_item(organization.find_element_by_class_name('pv-volunteer-causes').text)
+                    except:
+                        volunteer_obj['Field'] = ''
+
+                    try:
+                        volunteer_obj['Description'] = clean_item(
+                            organization.find_element_by_class_name('pv-entity__description').text)
+                    except:
+                        volunteer_obj['Description'] = ''
+
+                    volunteer.append(volunteer_obj)
+                    volunteer_obj = {}
+                obj['Volunteer Experience'] = volunteer
 
                 try:
                     browser.find_element_by_xpath("//button[@class='pv-profile-section__card-action-bar pv-skills-section__additional-skills artdeco-container-card-action-bar artdeco-button artdeco-button--tertiary artdeco-button--3 artdeco-button--fluid']").click()
@@ -391,7 +503,7 @@ def pscrape(config):
     browser.quit()
 
 if __name__ == '__main__':
-    docs = mongodb_read_docs('Jaeseung')
+    docs = mongodb_read_docs('Applicantprofile')
     CHECKLIST = []
     for d in docs:
         try:
